@@ -2,6 +2,8 @@
 
 import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
+import { useMoodTimeline } from "@/hooks/use-mood-timeline";
+import { MoodTimelineChart } from "@/components/mood-timeline-chart";
 
 // Labels for each emotion to display in the UI
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -28,12 +30,15 @@ export default function Page() {
     totalDetections,
     emotionPercentages,
     dominantEventEmotion,
+    emotionCounts,
     videoRef,
     startTracking,
     stopTracking,
     error,
     emotions,
   } = useEmotionTracking();
+
+  const { timeline } = useMoodTimeline(emotionCounts, status === "tracking");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
@@ -81,9 +86,7 @@ export default function Page() {
         */}
         <div
           className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${
-            status === "loading" || status === "tracking"
-              ? "block"
-              : "hidden"
+            status === "loading" || status === "tracking" ? "block" : "hidden"
           }`}
         >
           <video
@@ -107,7 +110,6 @@ export default function Page() {
         {/* ========== TRACKING STATE ========== */}
         {status === "tracking" && (
           <div className="mt-6 flex flex-col gap-6">
-
             {/* Current dominant emotion */}
             {currentEmotion && (
               <div className="text-center">
@@ -148,6 +150,14 @@ export default function Page() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Mood timeline chart */}
+            <div className="space-y-2">
+              <h2 className="text-sm font-medium text-foreground">
+                Mood Over Time
+              </h2>
+              <MoodTimelineChart data={timeline} />
             </div>
 
             {/* Total detections counter */}
@@ -230,6 +240,16 @@ export default function Page() {
                     </div>
                   ))}
                 </div>
+
+                {/* Mood timeline chart */}
+                {timeline.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-foreground">
+                      Mood Over Time
+                    </h3>
+                    <MoodTimelineChart data={timeline} />
+                  </div>
+                )}
               </>
             )}
 
