@@ -5,7 +5,6 @@ import type { EmotionCounts } from "./use-emotion-tracking";
 
 const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry", "bored"] as const;
 const SNAPSHOT_INTERVAL_MS = 30_000; // 30 seconds
-const STORAGE_KEY = "mood-timeline";
 
 export interface MoodSnapshot {
   timestamp: number;
@@ -21,9 +20,10 @@ export interface MoodSnapshot {
 /**
  * Tracks mood over time by taking periodic snapshots of emotion distribution.
  *
- * Each snapshot captures the emotion percentages for the *interval* since the
- * previous snapshot (not cumulative), giving a clear picture of how mood
- * evolves during the event. Snapshots are persisted to localStorage.
+ * SECURITY: All data is ephemeral (in-memory only). No localStorage, no
+ * sessionStorage, no persistence. Data dies with the component/tab.
+ * Timestamps use relative session offsets, not absolute Date.now() values,
+ * to prevent temporal correlation attacks.
  */
 export function useMoodTimeline(
   emotionCounts: EmotionCounts,
@@ -64,14 +64,15 @@ export function useMoodTimeline(
 
     minuteRef.current += 1;
 
-    // Format label as m:ss (e.g. "0:30", "1:00", "1:30")
+    // Format label as relative offset m:ss (e.g. "0:30", "1:00", "1:30")
+    // SECURITY: No absolute timestamps — only relative session offsets
     const totalSeconds = minuteRef.current * 30;
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     const label = `${mins}:${secs.toString().padStart(2, "0")}`;
 
     const snapshot: MoodSnapshot = {
-      timestamp: Date.now(),
+      timestamp: totalSeconds, // relative seconds since session start, NOT Date.now()
       label,
       happy: Math.round((deltas.happy / totalDelta) * 100),
       neutral: Math.round((deltas.neutral / totalDelta) * 100),
@@ -83,15 +84,8 @@ export function useMoodTimeline(
 
     prevCountsRef.current = { ...current };
 
-    setTimeline((prev) => {
-      const updated = [...prev, snapshot];
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // localStorage might be full or unavailable
-      }
-      return updated;
-    });
+    // SECURITY: Data stored only in React state (ephemeral, in-memory)
+    setTimeline((prev) => [...prev, snapshot]);
   }, []);
 
   // Start/stop the snapshot interval based on tracking state
@@ -102,9 +96,6 @@ export function useMoodTimeline(
     minuteRef.current = 0;
     prevCountsRef.current = { ...currentCountsRef.current };
     setTimeline([]);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch { }
 
     intervalRef.current = setInterval(takeSnapshot, SNAPSHOT_INTERVAL_MS);
 
@@ -118,28 +109,11 @@ export function useMoodTimeline(
     };
   }, [isTracking, takeSnapshot]);
 
-  // Load persisted timeline on mount (survives page refresh)
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as MoodSnapshot[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTimeline(parsed);
-          minuteRef.current = parsed.length;
-        }
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }, []);
+  // SECURITY: No localStorage load on mount — data is ephemeral by design
 
   const clearTimeline = useCallback(() => {
     setTimeline([]);
     minuteRef.current = 0;
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch { }
   }, []);
 
   return { timeline, clearTimeline };
