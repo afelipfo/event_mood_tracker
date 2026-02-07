@@ -1,11 +1,19 @@
 import { openai } from "@ai-sdk/openai";
+<<<<<<< HEAD
+import { streamText } from "ai";
+=======
 import { streamText, convertToModelMessages } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+>>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+<<<<<<< HEAD
+export async function POST(req: Request) {
+    const { messages, sessionData } = await req.json();
+=======
 // Initialize Supabase Admin client to fetch session data securely
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,11 +55,29 @@ export async function POST(req: Request) {
   } catch {
     return new Response("Malformed JSON", { status: 400 });
   }
+>>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
 
   if (!parsed.success) {
     return new Response("Invalid input", { status: 400 });
   }
 
+<<<<<<< HEAD
+    // If sessionData is provided directly from the client
+    if (sessionData) {
+        console.log("Using session data provided in request");
+        const { totalDetections, dominantMood, emotionPercentages } = sessionData;
+
+        systemMessage += `\n\nHere is the summary data for the event just finished (provided by client):
+      - Total Face Detections: ${totalDetections}
+      - Dominant Mood: ${dominantMood}
+      - Emotion Breakdown: ${JSON.stringify(emotionPercentages)}
+      
+      Start by giving a brief executive summary of these results, interpreting the dominant mood. Then offer 3 strategic recommendations based on this specific data.`;
+
+    } else {
+        console.log("No sessionData provided to chat endpoint");
+        systemMessage += "\n\n(Note: No specific session data was provided. Ask the user for details if needed.)";
+=======
   const { messages, sessionId } = parsed.data;
 
   let systemMessage =
@@ -83,6 +109,7 @@ export async function POST(req: Request) {
       console.error("Error fetching session context:", error);
       systemMessage +=
         "\n\n(Note: Could not retrieve detailed session data from the database. Ask the user for details if needed.)";
+>>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
     }
   } else {
     console.log("No sessionId provided to chat endpoint");

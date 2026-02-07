@@ -80,32 +80,40 @@ export default function Page() {
   };
 
   const [saving, setSaving] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Renamed from sessionId to sessionData to hold the full context
+  const [sessionData, setSessionData] = useState<{
+    totalDetections: number;
+    dominantMood: string | null;
+    emotionPercentages: Record<string, number>;
+    timelineData: any[];
+  } | null>(null);
 
   const handleEndEvent = async () => {
     stopTracking();
     setSaving(true);
 
     try {
-      const res = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          totalDetections,
-          dominantMood: dominantEventEmotion,
-          emotionPercentages,
-          timelineData: timeline,
-        }),
-      });
+      // Simulate a small delay for UX
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.session) {
-          setSessionId(data.session.id);
-        }
-      }
+      const newSessionData = {
+        id: crypto.randomUUID(), // Generate a local ID
+        timestamp: new Date().toISOString(),
+        totalDetections,
+        dominantMood: dominantEventEmotion,
+        emotionPercentages,
+        timelineData: timeline,
+      };
+
+      // Save to Local Storage
+      const existingSessions = JSON.parse(localStorage.getItem("eventik_sessions") || "[]");
+      localStorage.setItem("eventik_sessions", JSON.stringify([newSessionData, ...existingSessions]));
+
+      // Set session data for the chat
+      setSessionData(newSessionData);
+
     } catch (err) {
-      console.error("Failed to save session:", err);
+      console.error("Failed to save session locally:", err);
     } finally {
       setSaving(false);
     }
@@ -136,11 +144,8 @@ export default function Page() {
                 </h2>
                 <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                   <p>
-                    This application uses{" "}
-                    <strong className="text-foreground">
-                      facial expression analysis
-                    </strong>{" "}
-                    via your webcam to detect audience mood in real-time.
+                    This application uses <strong className="text-foreground">facial expression analysis</strong> via
+                    your webcam to detect audience mood in real-time.
                   </p>
                   <p>By continuing, you acknowledge that:</p>
                   <ul className="list-disc space-y-2 pl-5">
@@ -149,16 +154,13 @@ export default function Page() {
                       to detect facial expressions.
                     </li>
                     <li>
-                      <strong className="text-foreground">
-                        No video, images, or facial geometry
-                      </strong>{" "}
-                      are stored or transmitted. Only aggregated emotion
-                      statistics are kept in memory during your session.
+                      <strong className="text-foreground">No video, images, or facial geometry</strong> are
+                      stored or transmitted. Only aggregated emotion statistics
+                      are kept in memory during your session.
                     </li>
                     <li>
-                      All data is{" "}
-                      <strong className="text-foreground">ephemeral</strong> and
-                      destroyed when you close the tab or end the session.
+                      All data is <strong className="text-foreground">ephemeral</strong> and destroyed when you
+                      close the tab or end the session.
                     </li>
                     <li>
                       If you choose to use the AI analysis feature, anonymized
@@ -202,10 +204,7 @@ export default function Page() {
                 </p>
                 <h1
                   className="animate-fade-in font-serif text-5xl leading-[1.1] tracking-tight text-foreground sm:text-6xl"
-                  style={{
-                    animationDelay: "100ms",
-                    animationFillMode: "backwards",
-                  }}
+                  style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
                 >
                   Event Mood
                   <br />
@@ -213,10 +212,7 @@ export default function Page() {
                 </h1>
                 <p
                   className="animate-fade-in mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground"
-                  style={{
-                    animationDelay: "200ms",
-                    animationFillMode: "backwards",
-                  }}
+                  style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
                 >
                   Detect the emotional pulse of your audience through facial
                   expression analysis, live from your webcam.
@@ -228,10 +224,7 @@ export default function Page() {
                 type="button"
                 onClick={handleStartClick}
                 className="animate-fade-in group relative rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
-                style={{
-                  animationDelay: "350ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "350ms", animationFillMode: "backwards" }}
               >
                 Begin Tracking
               </button>
@@ -239,10 +232,7 @@ export default function Page() {
               {/* Privacy footnote (V-12: accurate claim) */}
               <p
                 className="animate-fade-in text-center text-[11px] leading-relaxed text-muted-foreground/60"
-                style={{
-                  animationDelay: "450ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "450ms", animationFillMode: "backwards" }}
               >
                 All processing happens locally in your browser.
                 <br />
@@ -256,21 +246,20 @@ export default function Page() {
               Always rendered so videoRef is available
           ════════════════════════════════════════════ */}
           <div
-            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
-              status === "loading" || status === "tracking" ? "block" : "hidden"
-            } ${
-              currentEmotion
+            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${status === "loading" || status === "tracking"
+              ? "block"
+              : "hidden"
+              } ${currentEmotion
                 ? EMOTION_GLOW_CLASS[currentEmotion]
                 : "ambient-glow"
-            }`}
+              }`}
           >
             {/* Border glow ring */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] -z-0" />
 
             <div
-              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${
-                status === "loading" ? "aspect-video" : ""
-              }`}
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${status === "loading" ? "aspect-video" : ""
+                }`}
             >
               {/* Camera: block-level video avoids mobile distortion (4:3 / portrait feeds).
                   SECURITY (V-08b): Optional privacy blur — when enabled,
@@ -361,11 +350,10 @@ export default function Page() {
                         </div>
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                           <div
-                            className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${
-                              currentEmotion === emotion
-                                ? "opacity-100"
-                                : "opacity-60"
-                            }`}
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${currentEmotion === emotion
+                              ? "opacity-100"
+                              : "opacity-60"
+                              }`}
                             style={{
                               width: `${emotionPercentages[emotion]}%`,
                             }}
@@ -476,10 +464,7 @@ export default function Page() {
                   {/* Stats row */}
                   <div
                     className="grid grid-cols-2 gap-3 animate-fade-in"
-                    style={{
-                      animationDelay: "100ms",
-                      animationFillMode: "backwards",
-                    }}
+                    style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
                   >
                     {/* Total detections */}
                     <div className="glass-card px-5 py-4 text-center">
@@ -507,16 +492,13 @@ export default function Page() {
                   {/* Engagement gauge + Emotion breakdown */}
                   <div
                     className="flex items-start gap-6 animate-slide-up"
-                    style={{
-                      animationDelay: "200ms",
-                      animationFillMode: "backwards",
-                    }}
+                    style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
                   >
-                    <EngagementScoreGauge
-                      emotionPercentages={emotionPercentages}
-                    />
+                    <EngagementScoreGauge emotionPercentages={emotionPercentages} />
 
-                    <div className="glass-card min-w-0 flex-1 p-6 space-y-4">
+                    <div
+                      className="glass-card min-w-0 flex-1 p-6 space-y-4"
+                    >
                       <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Emotion Breakdown
                       </h3>
@@ -541,11 +523,10 @@ export default function Page() {
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                               <div
-                                className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${
-                                  dominantEventEmotion === emotion
-                                    ? "opacity-100"
-                                    : "opacity-50"
-                                }`}
+                                className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${dominantEventEmotion === emotion
+                                  ? "opacity-100"
+                                  : "opacity-50"
+                                  }`}
                                 style={{
                                   width: `${emotionPercentages[emotion]}%`,
                                   animation: "bar-fill 0.8s ease-out",
@@ -569,10 +550,7 @@ export default function Page() {
                   {timeline.length > 0 && (
                     <div
                       className="glass-card p-6 space-y-3 animate-slide-up"
-                      style={{
-                        animationDelay: "400ms",
-                        animationFillMode: "backwards",
-                      }}
+                      style={{ animationDelay: "400ms", animationFillMode: "backwards" }}
                     >
                       <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Mood Over Time
@@ -586,13 +564,7 @@ export default function Page() {
                     <h3 className="text-sm font-medium text-foreground">
                       Eventik Analysis
                     </h3>
-                    <EventikChat
-                      emotionCounts={emotionCounts}
-                      totalDetections={totalDetections}
-                      emotionPercentages={emotionPercentages}
-                      dominantMood={dominantEventEmotion}
-                      sessionId={sessionId}
-                    />
+                    <EventikChat sessionData={sessionData} />
                   </div>
                 </>
               )}
@@ -602,10 +574,7 @@ export default function Page() {
                 type="button"
                 onClick={() => window.location.reload()}
                 className="animate-fade-in w-full rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
-                style={{
-                  animationDelay: "500ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
               >
                 Start New Session
               </button>
