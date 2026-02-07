@@ -22,6 +22,7 @@ export async function POST(req: Request) {
 
     // If sessionId is provided, fetch the specific session data from Supabase
     if (sessionId) {
+        console.log("Fetching session from Supabase:", sessionId);
         const { data: session, error } = await supabaseAdmin
             .from("sessions")
             .select("*")
@@ -37,10 +38,13 @@ export async function POST(req: Request) {
       - Emotion Breakdown: ${JSON.stringify(emotion_percentages)}
       
       Start by giving a brief executive summary of these results, interpreting the dominant mood. Then offer 3 strategic recommendations based on this specific data.`;
+            console.log("Context loaded successfully for session:", sessionId);
         } else {
             console.error("Error fetching session context:", error);
             systemMessage += "\n\n(Note: Could not retrieve detailed session data from the database. Ask the user for details if needed.)";
         }
+    } else {
+        console.log("No sessionId provided to chat endpoint");
     }
 
     const result = streamText({

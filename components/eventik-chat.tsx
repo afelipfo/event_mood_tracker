@@ -18,8 +18,10 @@ export function EventikChat({ sessionId }: EventikChatProps) {
 
     // Auto-start the conversation when sessionId is available
     useEffect(() => {
+        console.log("EventikChat mounted. SessionId:", sessionId);
         if (!hasStartedRef.current && sessionId) {
             hasStartedRef.current = true;
+            console.log("Starting chat with sessionId:", sessionId);
             // Send a hidden system-like message to trigger the initial analysis
             // We pass the sessionId in the 'body' so the server can fetch context from DB
             append(
@@ -82,7 +84,15 @@ export function EventikChat({ sessionId }: EventikChatProps) {
             </div>
 
             <form
-                onSubmit={handleSubmit}
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    if (sessionId) {
+                        handleSubmit(e, { body: { sessionId } });
+                    } else {
+                        // Fallback if no session ID yet
+                        handleSubmit(e);
+                    }
+                }}
                 className="flex items-center gap-2 border-t border-border p-4"
             >
                 <input
