@@ -5,36 +5,46 @@ import { useEffect, useRef } from "react";
 import { Send, Bot, User } from "lucide-react";
 import type { EmotionCounts } from "@/hooks/use-emotion-tracking";
 
-interface EventikChatProps {
-    sessionId: string | null;
+interface SessionData {
+    totalDetections: number;
+    dominantMood: string | null;
+    emotionPercentages: Record<string, number>;
+    timelineData: any[];
 }
 
-export function EventikChat({ sessionId }: EventikChatProps) {
-    const { messages, input, handleInputChange, handleSubmit, append } = useChat({
+interface EventikChatProps {
+    sessionData: SessionData | null;
+}
+
+export function EventikChat({ sessionData }: EventikChatProps) {
+    const { messages, input, handleInputChange, handleSubmit, append, error } = useChat({
         api: "/api/chat",
+        onError: (err) => {
+            console.error("Chat error:", err);
+        }
     });
 
     const hasStartedRef = useRef(false);
 
-    // Auto-start the conversation when sessionId is available
+    // Auto-start the conversation when sessionData is available
     useEffect(() => {
-        console.log("EventikChat mounted. SessionId:", sessionId);
-        if (!hasStartedRef.current && sessionId) {
+        console.log("EventikChat mounted. SessionData available:", !!sessionData);
+        if (!hasStartedRef.current && sessionData) {
             hasStartedRef.current = true;
-            console.log("Starting chat with sessionId:", sessionId);
+            console.log("Starting chat with session data");
             // Send a hidden system-like message to trigger the initial analysis
-            // We pass the sessionId in the 'body' so the server can fetch context from DB
+            // We pass the full sessionData in the 'body' so the server can build context directly
             append(
                 {
                     role: "user",
                     content: "Please analyze the event results for this session.",
                 },
                 {
-                    body: { sessionId },
+                    body: { sessionData },
                 }
             );
         }
-    }, [sessionId, append]);
+    }, [sessionData, append]);
 
     return (
         <div className="flex h-[500px] w-full flex-col rounded-md border border-border bg-card shadow-sm">
@@ -49,47 +59,61 @@ export function EventikChat({ sessionId }: EventikChatProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 && (
+                {messages.length === 0 && !error && (
                     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        <p>Analyzing event data...</p>
+                        <p>{sessionData ? "Analyzing event data..." : "Ready to chat about your event."}</p>
                     </div>
                 )}
 
-                {messages.slice(1).map((m) => (
-                    <div
-                        key={m.id}
-                        className={`flex items-start gap-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"
-                            }`}
-                    >
-                        <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                                }`}
-                        >
-                            {m.role === "user" ? (
-                                <User className="h-5 w-5" />
-                            ) : (
-                                <Bot className="h-5 w-5" />
-                            )}
-                        </div>
-                        <div
-                            className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${m.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
-                                }`}
-                        >
-                            <div className="whitespace-pre-wrap">{m.content}</div>
-                        </div>
+                {error && (
+                    <div className="rounded-md bg-red-50 p-4 text-sm text-red-500">
+                        Error: {error.message}
                     </div>
-                ))}
+                )}
+
+                {messages.map((m) => {
+                    // Start hidden filtering: Only hide if it's the specific auto-start message
+                    if (m.role === 'user' && m.content === "Please analyze the event results for this session.") {
+                        return null;
+                    }
+
+                    return (
+                        <div
+                            key={m.id}
+                            className={`flex items-start gap-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"
+                                }`}
+                        >
+                            <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                                    }`}
+                            >
+                                {m.role === "user" ? (
+                                    <User className="h-5 w-5" />
+                                ) : (
+                                    <Bot className="h-5 w-5" />
+                                )}
+                            </div>
+                            <div
+                                className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${m.role === "user"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted"
+                                    }`}
+                            >
+                                <div className="whitespace-pre-wrap">{m.content}</div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             <form
                 onSubmit={(e) => {
                     e.preventDefault();
-                    if (sessionId) {
-                        handleSubmit(e, { body: { sessionId } });
+                    console.log("Submitting chat message.");
+                    if (sessionData) {
+                        handleSubmit(e, { body: { sessionData } });
                     } else {
-                        // Fallback if no session ID yet
+                        // Fallback if no session data yet
                         handleSubmit(e);
                     }
                 }}

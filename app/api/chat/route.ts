@@ -1,18 +1,11 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { createClient } from "@supabase/supabase-js";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-// Initialize Supabase Admin client to fetch session data securely
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(req: Request) {
-    const { messages, sessionId } = await req.json();
+    const { messages, sessionData } = await req.json();
 
     let systemMessage =
         "You are Eventik, an expert event strategist and audience mood analyst. " +
@@ -20,31 +13,21 @@ export async function POST(req: Request) {
         "Be professional, insightful, and concise. " +
         "Focus on what the data means for the event's success and future improvements.";
 
-    // If sessionId is provided, fetch the specific session data from Supabase
-    if (sessionId) {
-        console.log("Fetching session from Supabase:", sessionId);
-        const { data: session, error } = await supabaseAdmin
-            .from("sessions")
-            .select("*")
-            .eq("id", sessionId)
-            .single();
+    // If sessionData is provided directly from the client
+    if (sessionData) {
+        console.log("Using session data provided in request");
+        const { totalDetections, dominantMood, emotionPercentages } = sessionData;
 
-        if (session && !error) {
-            const { total_detections, dominant_mood, emotion_percentages } = session;
-
-            systemMessage += `\n\nHere is the summary data for the event just finished (fetched from database):
-      - Total Face Detections: ${total_detections}
-      - Dominant Mood: ${dominant_mood}
-      - Emotion Breakdown: ${JSON.stringify(emotion_percentages)}
+        systemMessage += `\n\nHere is the summary data for the event just finished (provided by client):
+      - Total Face Detections: ${totalDetections}
+      - Dominant Mood: ${dominantMood}
+      - Emotion Breakdown: ${JSON.stringify(emotionPercentages)}
       
       Start by giving a brief executive summary of these results, interpreting the dominant mood. Then offer 3 strategic recommendations based on this specific data.`;
-            console.log("Context loaded successfully for session:", sessionId);
-        } else {
-            console.error("Error fetching session context:", error);
-            systemMessage += "\n\n(Note: Could not retrieve detailed session data from the database. Ask the user for details if needed.)";
-        }
+
     } else {
-        console.log("No sessionId provided to chat endpoint");
+        console.log("No sessionData provided to chat endpoint");
+        systemMessage += "\n\n(Note: No specific session data was provided. Ask the user for details if needed.)";
     }
 
     const result = streamText({

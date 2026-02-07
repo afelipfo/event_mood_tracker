@@ -57,32 +57,40 @@ export default function Page() {
   const [showEmojis, setShowEmojis] = useState(true);
 
   const [saving, setSaving] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Renamed from sessionId to sessionData to hold the full context
+  const [sessionData, setSessionData] = useState<{
+    totalDetections: number;
+    dominantMood: string | null;
+    emotionPercentages: Record<string, number>;
+    timelineData: any[];
+  } | null>(null);
 
   const handleEndEvent = async () => {
     stopTracking();
     setSaving(true);
 
     try {
-      const res = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          totalDetections,
-          dominantMood: dominantEventEmotion,
-          emotionPercentages,
-          timelineData: timeline,
-        }),
-      });
+      // Simulate a small delay for UX
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.session) {
-          setSessionId(data.session.id);
-        }
-      }
+      const newSessionData = {
+        id: crypto.randomUUID(), // Generate a local ID
+        timestamp: new Date().toISOString(),
+        totalDetections,
+        dominantMood: dominantEventEmotion,
+        emotionPercentages,
+        timelineData: timeline,
+      };
+
+      // Save to Local Storage
+      const existingSessions = JSON.parse(localStorage.getItem("eventik_sessions") || "[]");
+      localStorage.setItem("eventik_sessions", JSON.stringify([newSessionData, ...existingSessions]));
+
+      // Set session data for the chat
+      setSessionData(newSessionData);
+
     } catch (err) {
-      console.error("Failed to save session:", err);
+      console.error("Failed to save session locally:", err);
     } finally {
       setSaving(false);
     }
@@ -160,8 +168,8 @@ export default function Page() {
           ════════════════════════════════════════════ */}
           <div
             className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${status === "loading" || status === "tracking"
-                ? "block"
-                : "hidden"
+              ? "block"
+              : "hidden"
               } ${currentEmotion
                 ? EMOTION_GLOW_CLASS[currentEmotion]
                 : "ambient-glow"
@@ -271,8 +279,8 @@ export default function Page() {
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                           <div
                             className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${currentEmotion === emotion
-                                ? "opacity-100"
-                                : "opacity-60"
+                              ? "opacity-100"
+                              : "opacity-60"
                               }`}
                             style={{
                               width: `${emotionPercentages[emotion]}%`,
@@ -417,8 +425,8 @@ export default function Page() {
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                               <div
                                 className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${dominantEventEmotion === emotion
-                                    ? "opacity-100"
-                                    : "opacity-50"
+                                  ? "opacity-100"
+                                  : "opacity-50"
                                   }`}
                                 style={{
                                   width: `${emotionPercentages[emotion]}%`,
@@ -460,7 +468,7 @@ export default function Page() {
                     <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                       Eventik Analysis
                     </h3>
-                    <EventikChat sessionId={sessionId} />
+                    <EventikChat sessionData={sessionData} />
                   </div>
                 </>
               )}
