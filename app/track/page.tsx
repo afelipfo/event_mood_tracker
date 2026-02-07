@@ -390,14 +390,12 @@ export default function Page() {
                     role="switch"
                     aria-checked={showEmojis}
                     onClick={() => setShowEmojis((v) => !v)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                      showEmojis ? "bg-primary" : "bg-white/[0.08]"
-                    }`}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${showEmojis ? "bg-primary" : "bg-white/[0.08]"
+                      }`}
                   >
                     <span
-                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
-                        showEmojis ? "translate-x-4" : "translate-x-0.5"
-                      }`}
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${showEmojis ? "translate-x-4" : "translate-x-0.5"
+                        }`}
                     />
                   </button>
                 </label>
@@ -412,14 +410,12 @@ export default function Page() {
                     role="switch"
                     aria-checked={blurVideo}
                     onClick={() => setBlurVideo((v) => !v)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                      blurVideo ? "bg-primary" : "bg-white/[0.08]"
-                    }`}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${blurVideo ? "bg-primary" : "bg-white/[0.08]"
+                      }`}
                   >
                     <span
-                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
-                        blurVideo ? "translate-x-4" : "translate-x-0.5"
-                      }`}
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${blurVideo ? "translate-x-4" : "translate-x-0.5"
+                        }`}
                     />
                   </button>
                 </label>
