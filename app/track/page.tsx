@@ -46,15 +46,38 @@ export default function Page() {
     dominantEventEmotion,
     emotionCounts,
     videoRef,
+    facesDetected,
     startTracking,
     stopTracking,
     error,
     emotions,
-    faceBoxes,
   } = useEmotionTracking();
 
   const { timeline } = useMoodTimeline(emotionCounts, status === "tracking");
   const [showEmojis, setShowEmojis] = useState(true);
+  const [blurVideo, setBlurVideo] = useState(false);
+
+  // SECURITY (V-06): Consent state — must be explicitly granted before tracking
+  const [consentGranted, setConsentGranted] = useState(false);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+
+  const handleStartClick = () => {
+    if (!consentGranted) {
+      setShowConsentDialog(true);
+    } else {
+      startTracking();
+    }
+  };
+
+  const handleConsentAccept = () => {
+    setConsentGranted(true);
+    setShowConsentDialog(false);
+    startTracking();
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentDialog(false);
+  };
 
   const [saving, setSaving] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -103,6 +126,62 @@ export default function Page() {
           )}
 
           {/* ════════════════════════════════════════════
+              CONSENT DIALOG (V-06)
+          ════════════════════════════════════════════ */}
+          {showConsentDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="mx-4 max-w-md rounded-2xl border border-white/[0.08] bg-card p-8 shadow-2xl">
+                <h2 className="font-serif text-2xl tracking-tight text-foreground">
+                  Biometric Data Consent
+                </h2>
+                <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
+                  <p>
+                    This application uses <strong className="text-foreground">facial expression analysis</strong> via
+                    your webcam to detect audience mood in real-time.
+                  </p>
+                  <p>By continuing, you acknowledge that:</p>
+                  <ul className="list-disc space-y-2 pl-5">
+                    <li>
+                      Your camera feed will be processed locally in your browser
+                      to detect facial expressions.
+                    </li>
+                    <li>
+                      <strong className="text-foreground">No video, images, or facial geometry</strong> are
+                      stored or transmitted. Only aggregated emotion statistics
+                      are kept in memory during your session.
+                    </li>
+                    <li>
+                      All data is <strong className="text-foreground">ephemeral</strong> and destroyed when you
+                      close the tab or end the session.
+                    </li>
+                    <li>
+                      If you choose to use the AI analysis feature, anonymized
+                      and noise-added emotion percentages may be sent to a
+                      third-party AI service (OpenAI).
+                    </li>
+                  </ul>
+                </div>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleConsentDecline}
+                    className="flex-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06]"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConsentAccept}
+                    className="flex-1 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
+                  >
+                    I Understand &amp; Accept
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════
               IDLE STATE
           ════════════════════════════════════════════ */}
           {status === "idle" && (
@@ -141,7 +220,7 @@ export default function Page() {
               {/* CTA Button */}
               <button
                 type="button"
-                onClick={startTracking}
+                onClick={handleStartClick}
                 className="animate-fade-in group relative rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
                 style={{
                   animationDelay: "350ms",
@@ -151,7 +230,7 @@ export default function Page() {
                 Begin Tracking
               </button>
 
-              {/* Privacy footnote */}
+              {/* Privacy footnote (V-12: accurate claim) */}
               <p
                 className="animate-fade-in text-center text-[11px] leading-relaxed text-muted-foreground/60"
                 style={{
@@ -159,9 +238,9 @@ export default function Page() {
                   animationFillMode: "backwards",
                 }}
               >
-                No video or images are stored.
+                All processing happens locally in your browser.
                 <br />
-                Only aggregated statistics are kept in memory.
+                No video or images are stored. Data is ephemeral.
               </p>
             </div>
           )}
@@ -187,36 +266,29 @@ export default function Page() {
                 status === "loading" ? "aspect-video" : ""
               }`}
             >
-              {/*
-                The video is rendered as a block element at full width so its
-                natural aspect ratio determines the container height. This
-                avoids distortion on mobile cameras (which often output 4:3 or
-                portrait feeds) and keeps percentage-based bounding boxes
-                aligned perfectly.
-              */}
+              {/* Camera: block-level video avoids mobile distortion (4:3 / portrait feeds).
+                  SECURITY (V-08b): Optional privacy blur — when enabled,
+                  video renders with blur-xl opacity-40 so no clear facial
+                  imagery is accessible even if the DOM is compromised. */}
               <video
                 ref={videoRef}
                 autoPlay
                 muted
                 playsInline
-                className="block w-full"
-                aria-label="Live webcam feed for emotion detection"
+                className={`block w-full transition-all duration-300 ${blurVideo ? "blur-xl opacity-40" : ""}`}
+                aria-label={`Live webcam feed for emotion detection${blurVideo ? " (blurred for privacy)" : ""}`}
               />
 
-              {/* Face Bounding Boxes Overlay */}
-              {status === "tracking" &&
-                faceBoxes.map((box, idx) => (
-                  <div
-                    key={idx}
-                    className="absolute rounded-md border border-primary/60 bg-primary/[0.06] transition-all duration-100 ease-linear"
-                    style={{
-                      left: `${box.x}%`,
-                      top: `${box.y}%`,
-                      width: `${box.width}%`,
-                      height: `${box.height}%`,
-                    }}
-                  />
-                ))}
+              {/* SECURITY (V-02): Bounding boxes REMOVED.
+                  Only a "faces detected" indicator is shown. */}
+              {status === "tracking" && facesDetected && (
+                <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1.5 backdrop-blur-sm">
+                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-medium text-primary">
+                    Faces detected
+                  </span>
+                </div>
+              )}
 
               {/* Loading overlay */}
               {status === "loading" && (
@@ -257,7 +329,9 @@ export default function Page() {
 
               {/* Engagement gauge + Live distribution */}
               <div className="flex items-start gap-6">
-                <EngagementScoreGauge emotionPercentages={emotionPercentages} />
+                <EngagementScoreGauge
+                  emotionPercentages={emotionPercentages}
+                />
 
                 {/* Live emotion distribution */}
                 <div className="glass-card min-w-0 flex-1 p-6 space-y-4">
@@ -312,27 +386,52 @@ export default function Page() {
                 <MoodCharts data={timeline} />
               </div>
 
-              {/* Toggle floating emojis */}
-              <label className="flex items-center justify-center gap-3 cursor-pointer select-none">
-                <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                  Floating Emojis
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showEmojis}
-                  onClick={() => setShowEmojis((v) => !v)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                    showEmojis ? "bg-primary" : "bg-white/[0.08]"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
-                      showEmojis ? "translate-x-4" : "translate-x-0.5"
+              {/* Toggle controls */}
+              <div className="flex items-center justify-center gap-6">
+                {/* Toggle floating emojis */}
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                    Floating Emojis
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showEmojis}
+                    onClick={() => setShowEmojis((v) => !v)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      showEmojis ? "bg-primary" : "bg-white/[0.08]"
                     }`}
-                  />
-                </button>
-              </label>
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
+                        showEmojis ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </label>
+
+                {/* Toggle privacy blur (V-08b) */}
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                    Privacy Blur
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={blurVideo}
+                    onClick={() => setBlurVideo((v) => !v)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      blurVideo ? "bg-primary" : "bg-white/[0.08]"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
+                        blurVideo ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </label>
+              </div>
 
               {/* End Event button */}
               <button
@@ -479,17 +578,17 @@ export default function Page() {
                   )}
 
                   {/* Eventik Chatbot */}
-                  <div
-                    className="glass-card p-6 space-y-3 animate-slide-up"
-                    style={{
-                      animationDelay: "500ms",
-                      animationFillMode: "backwards",
-                    }}
-                  >
-                    <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                  <div className="space-y-2 mt-4">
+                    <h3 className="text-sm font-medium text-foreground">
                       Eventik Analysis
                     </h3>
-                    <EventikChat sessionId={sessionId} />
+                    <EventikChat
+                      emotionCounts={emotionCounts}
+                      totalDetections={totalDetections}
+                      emotionPercentages={emotionPercentages}
+                      dominantMood={dominantEventEmotion}
+                      sessionId={sessionId}
+                    />
                   </div>
                 </>
               )}
