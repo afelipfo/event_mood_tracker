@@ -1,26 +1,11 @@
 import { openai } from "@ai-sdk/openai";
-<<<<<<< HEAD
-import { streamText } from "ai";
-=======
 import { streamText, convertToModelMessages } from "ai";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
->>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-<<<<<<< HEAD
-export async function POST(req: Request) {
-    const { messages, sessionData } = await req.json();
-=======
-// Initialize Supabase Admin client to fetch session data securely
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-// SECURITY (V-13): Strict input validation schema for AI SDK v6 UIMessage format
+// SECURITY (V-13): Strict input validation schema
 const RequestSchema = z.object({
   id: z.string().max(100).optional(),
   messages: z
@@ -33,7 +18,14 @@ const RequestSchema = z.object({
     )
     .max(20),
   trigger: z.string().max(50).optional(),
-  sessionId: z.string().max(100).nullish(),
+  sessionData: z
+    .object({
+      totalDetections: z.number(),
+      dominantMood: z.string().nullable(),
+      emotionPercentages: z.record(z.number()),
+      timelineData: z.array(z.unknown()).optional(),
+    })
+    .nullish(),
 });
 
 /**
@@ -55,30 +47,12 @@ export async function POST(req: Request) {
   } catch {
     return new Response("Malformed JSON", { status: 400 });
   }
->>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
 
   if (!parsed.success) {
     return new Response("Invalid input", { status: 400 });
   }
 
-<<<<<<< HEAD
-    // If sessionData is provided directly from the client
-    if (sessionData) {
-        console.log("Using session data provided in request");
-        const { totalDetections, dominantMood, emotionPercentages } = sessionData;
-
-        systemMessage += `\n\nHere is the summary data for the event just finished (provided by client):
-      - Total Face Detections: ${totalDetections}
-      - Dominant Mood: ${dominantMood}
-      - Emotion Breakdown: ${JSON.stringify(emotionPercentages)}
-      
-      Start by giving a brief executive summary of these results, interpreting the dominant mood. Then offer 3 strategic recommendations based on this specific data.`;
-
-    } else {
-        console.log("No sessionData provided to chat endpoint");
-        systemMessage += "\n\n(Note: No specific session data was provided. Ask the user for details if needed.)";
-=======
-  const { messages, sessionId } = parsed.data;
+  const { messages, sessionData } = parsed.data;
 
   let systemMessage =
     "You are Eventik, an expert event strategist and audience mood analyst. " +
@@ -86,38 +60,25 @@ export async function POST(req: Request) {
     "Be professional, insightful, and concise. " +
     "Focus on what the data means for the event's success and future improvements.";
 
-  // If sessionId is provided, fetch the specific session data from Supabase
-  if (sessionId) {
-    console.log("Fetching session from Supabase:", sessionId);
-    const { data: session, error } = await supabaseAdmin
-      .from("sessions")
-      .select("*")
-      .eq("id", sessionId)
-      .single();
+  if (sessionData) {
+    const { totalDetections, dominantMood, emotionPercentages } = sessionData;
 
-    if (session && !error) {
-      const { total_detections, dominant_mood, emotion_percentages } = session;
-
-      systemMessage += `\n\nHere is the summary data for the event just finished (fetched from database):
-      - Total Face Detections: ${total_detections}
-      - Dominant Mood: ${sanitizeForPrompt(String(dominant_mood))}
-      - Emotion Breakdown: ${sanitizeForPrompt(JSON.stringify(emotion_percentages))}
+    systemMessage += `\n\nHere is the summary data for the event just finished:
+      - Total Face Detections: ${totalDetections}
+      - Dominant Mood: ${sanitizeForPrompt(String(dominantMood ?? "unknown"))}
+      - Emotion Breakdown: ${sanitizeForPrompt(JSON.stringify(emotionPercentages))}
       
       Start by giving a brief executive summary of these results, interpreting the dominant mood. Then offer 3 strategic recommendations based on this specific data.`;
-      console.log("Context loaded successfully for session:", sessionId);
-    } else {
-      console.error("Error fetching session context:", error);
-      systemMessage +=
-        "\n\n(Note: Could not retrieve detailed session data from the database. Ask the user for details if needed.)";
->>>>>>> d850f2f6ceba996f3ef95bfd79c893d179a132f0
-    }
   } else {
-    console.log("No sessionId provided to chat endpoint");
-    // Fallback: Check if the first user message contains event data (inline in text)
+    // Fallback: Check if the first user message contains event data inline
     const firstUserMessage = messages.find((m) => m.role === "user");
     if (firstUserMessage) {
       const textParts = firstUserMessage.parts
-        .filter((p) => p.type === "text" && typeof p.text === "string")
+        .filter(
+          (p): p is { type: string; text: string } =>
+            (p as { type?: string }).type === "text" &&
+            typeof (p as { text?: string }).text === "string"
+        )
         .map((p) => String(p.text ?? ""))
         .join("\n");
 
@@ -126,11 +87,14 @@ export async function POST(req: Request) {
         systemMessage += `\n\nHere is the summary data for the event just finished:\n${sanitized}\n\nStart by giving a brief executive summary of these results, interpreting the dominant mood and any notable anomalies (e.g., high boredom or anger). Then offer 3 strategic recommendations.`;
       }
     }
+
+    if (!systemMessage.includes("summary data")) {
+      systemMessage +=
+        "\n\n(Note: No specific session data was provided. Ask the user for details if needed.)";
+    }
   }
 
   // Convert UIMessages to ModelMessages for streamText
-  // Cast through unknown because Zod validation gives us a loose type,
-  // but we've validated the shape matches what the SDK expects
   const modelMessages = await convertToModelMessages(
     messages as unknown as Parameters<typeof convertToModelMessages>[0]
   );
