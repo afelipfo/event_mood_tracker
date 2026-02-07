@@ -4,6 +4,7 @@ import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
 import { useMoodTimeline } from "@/hooks/use-mood-timeline";
 import { MoodCharts } from "@/components/mood-charts";
+import { EventikChat } from "@/components/eventik-chat";
 
 // Labels for each emotion to display in the UI
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -88,9 +89,8 @@ export default function Page() {
           It is hidden until we are in "loading" or "tracking" state.
         */}
         <div
-          className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${
-            status === "loading" || status === "tracking" ? "block" : "hidden"
-          }`}
+          className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${status === "loading" || status === "tracking" ? "block" : "hidden"
+            }`}
         >
           <video
             ref={videoRef}
@@ -275,6 +275,23 @@ export default function Page() {
                 )}
               </>
             )}
+
+            {/* Eventik Chatbot */}
+            <div className="space-y-2 mt-4">
+              <h3 className="text-sm font-medium text-foreground">
+                Eventik Analysis
+              </h3>
+              <EventikChat
+                emotionCounts={emotionCounts}
+                totalDetections={totalDetections}
+                emotionPercentages={emotionPercentages}
+                dominantMood={
+                  dominantEventEmotion
+                    ? EMOTION_LABELS[dominantEventEmotion]
+                    : null
+                }
+              />
+            </div>
 
             {/* Restart button to go back to idle state */}
             <button
