@@ -3,7 +3,8 @@
 import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
 import { useMoodTimeline } from "@/hooks/use-mood-timeline";
-import { MoodCharts } from "@/components/mood-charts";
+import { MoodTimelineChart } from "@/components/mood-timeline-chart";
+import { EngagementScoreGauge } from "@/components/engagement-score-gauge";
 
 // Labels for each emotion to display in the UI
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -45,7 +46,7 @@ export default function Page() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-xl">
+      <div className="w-full max-w-2xl">
         {/* Application Title */}
         <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-foreground">
           Event Mood Tracker
@@ -145,42 +146,45 @@ export default function Page() {
               </div>
             )}
 
-            {/* Live emotion percentage distribution with div-based progress bars */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-foreground">
-                Live Distribution
-              </h2>
-              {emotions.map((emotion) => (
-                <div key={emotion} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{EMOTION_LABELS[emotion]}</span>
-                    <span>{emotionPercentages[emotion]}%</span>
+            {/* Engagement gauge + Live distribution side by side */}
+            <div className="flex items-center gap-6">
+              <EngagementScoreGauge emotionPercentages={emotionPercentages} />
+
+              {/* Live emotion percentage distribution */}
+              <div className="min-w-0 flex-1 space-y-3">
+                <h2 className="text-sm font-medium text-foreground">
+                  Live Distribution
+                </h2>
+                {emotions.map((emotion) => (
+                  <div key={emotion} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{EMOTION_LABELS[emotion]}</span>
+                      <span>{emotionPercentages[emotion]}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
+                        style={{
+                          width: `${emotionPercentages[emotion]}%`,
+                        }}
+                        role="progressbar"
+                        aria-valuenow={emotionPercentages[emotion]}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${EMOTION_LABELS[emotion]} percentage`}
+                      />
+                    </div>
                   </div>
-                  {/* Progress bar container */}
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                    {/* Filled portion */}
-                    <div
-                      className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
-                      style={{
-                        width: `${emotionPercentages[emotion]}%`,
-                      }}
-                      role="progressbar"
-                      aria-valuenow={emotionPercentages[emotion]}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`${EMOTION_LABELS[emotion]} percentage`}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            {/* Mood timeline / heatmap charts */}
+            {/* Mood timeline chart */}
             <div className="space-y-2">
               <h2 className="text-sm font-medium text-foreground">
                 Mood Over Time
               </h2>
-              <MoodCharts data={timeline} />
+              <MoodTimelineChart data={timeline} />
             </div>
 
             {/* Total detections counter */}
@@ -234,43 +238,45 @@ export default function Page() {
                   </div>
                 )}
 
-                {/* Emotion percentages with progress bars */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Emotion Breakdown
-                  </h3>
-                  {emotions.map((emotion) => (
-                    <div key={emotion} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{EMOTION_LABELS[emotion]}</span>
-                        <span>{emotionPercentages[emotion]}%</span>
+                {/* Engagement gauge + Emotion breakdown side by side */}
+                <div className="flex items-center gap-6">
+                  <EngagementScoreGauge emotionPercentages={emotionPercentages} />
+
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <h3 className="text-sm font-medium text-foreground">
+                      Emotion Breakdown
+                    </h3>
+                    {emotions.map((emotion) => (
+                      <div key={emotion} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{EMOTION_LABELS[emotion]}</span>
+                          <span>{emotionPercentages[emotion]}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
+                            style={{
+                              width: `${emotionPercentages[emotion]}%`,
+                            }}
+                            role="progressbar"
+                            aria-valuenow={emotionPercentages[emotion]}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${EMOTION_LABELS[emotion]} percentage`}
+                          />
+                        </div>
                       </div>
-                      {/* Progress bar container */}
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        {/* Filled portion */}
-                        <div
-                          className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
-                          style={{
-                            width: `${emotionPercentages[emotion]}%`,
-                          }}
-                          role="progressbar"
-                          aria-valuenow={emotionPercentages[emotion]}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-label={`${EMOTION_LABELS[emotion]} percentage`}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                {/* Mood timeline / heatmap charts */}
+                {/* Mood timeline chart */}
                 {timeline.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-foreground">
                       Mood Over Time
                     </h3>
-                    <MoodCharts data={timeline} />
+                    <MoodTimelineChart data={timeline} />
                   </div>
                 )}
               </>
