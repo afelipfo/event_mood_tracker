@@ -6,6 +6,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry"] as const;
 export type Emotion = (typeof EMOTIONS)[number];
 export type EmotionCounts = Record<Emotion, number>;
+export type FaceBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export type Status = "idle" | "loading" | "tracking" | "summary";
 
 // CDN URL for pre-trained face-api.js models
@@ -30,6 +36,8 @@ export function useEmotionTracking() {
   });
   // The most recently detected dominant emotion
   const [currentEmotion, setCurrentEmotion] = useState<Emotion | null>(null);
+  // Detected face bounding boxes (in percentage relative to video size)
+  const [faceBoxes, setFaceBoxes] = useState<FaceBox[]>([]);
   // Error message for user feedback
   const [error, setError] = useState<string | null>(null);
 
@@ -66,9 +74,22 @@ export function useEmotionTracking() {
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceExpressions();
 
+      const newFaceBoxes: FaceBox[] = [];
+
       // Process each detected face
       for (const detection of detections) {
         const expressions = detection.expressions;
+        const box = detection.detection.box;
+
+        // Calculate relative coordinates (percentages) for responsive UI
+        // We use the video's videoWidth/videoHeight, not the element's client size
+        // to ensure accuracy regardless of display size if object-fit is handled correctly.
+        newFaceBoxes.push({
+          x: (box.x / video.videoWidth) * 100,
+          y: (box.y / video.videoHeight) * 100,
+          width: (box.width / video.videoWidth) * 100,
+          height: (box.height / video.videoHeight) * 100,
+        });
 
         // Find the dominant emotion from our fixed set
         let dominant: Emotion = "neutral";
@@ -91,6 +112,8 @@ export function useEmotionTracking() {
           [dominant]: prev[dominant] + 1,
         }));
       }
+
+      setFaceBoxes(newFaceBoxes);
     } catch {
       // Silently ignore individual frame detection errors
       // (e.g., transient canvas issues)
@@ -114,6 +137,7 @@ export function useEmotionTracking() {
       setError(null);
       setEmotionCounts({ ...initialCounts });
       setCurrentEmotion(null);
+      setFaceBoxes([]);
 
       // Dynamically import face-api.js to avoid SSR issues
       const faceapi = await import("face-api.js");
@@ -218,8 +242,8 @@ export function useEmotionTracking() {
   const dominantEventEmotion: Emotion | null =
     totalDetections > 0
       ? EMOTIONS.reduce((a, b) =>
-          emotionCounts[a] >= emotionCounts[b] ? a : b
-        )
+        emotionCounts[a] >= emotionCounts[b] ? a : b
+      )
       : null;
 
   return {
@@ -230,6 +254,7 @@ export function useEmotionTracking() {
     emotionPercentages,
     dominantEventEmotion,
     videoRef,
+    faceBoxes,
     startTracking,
     stopTracking,
     error,

@@ -33,6 +33,7 @@ export default function Page() {
     stopTracking,
     error,
     emotions,
+    faceBoxes,
   } = useEmotionTracking();
 
   return (
@@ -80,18 +81,22 @@ export default function Page() {
           It is hidden until we are in "loading" or "tracking" state.
         */}
         <div
-          className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${
-            status === "loading" || status === "tracking"
+          className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${status === "loading" || status === "tracking"
               ? "block"
               : "hidden"
-          }`}
+            }`}
         >
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="absolute inset-0 h-full w-full object-cover"
+            /* 
+                      Using object-fill ensures that the video stretches to fill the container 100%. 
+                      This guarantees that our percentage-based bounding boxes (calculated from source 
+                      dimensions) align perfectly with the displayed video, even if it distorts slightly.
+                    */
+            className="absolute inset-0 h-full w-full object-fill"
             aria-label="Live webcam feed for emotion detection"
           />
           {status === "loading" && (
@@ -102,6 +107,21 @@ export default function Page() {
               <p className="text-xs text-muted-foreground">Please wait</p>
             </div>
           )}
+
+          {/* Face Bounding Boxes Overlay */}
+          {status === "tracking" &&
+            faceBoxes.map((box, idx) => (
+              <div
+                key={idx}
+                className="absolute border-2 border-primary/80 bg-primary/10 transition-all duration-100 ease-linear"
+                style={{
+                  left: `${box.x}%`,
+                  top: `${box.y}%`,
+                  width: `${box.width}%`,
+                  height: `${box.height}%`,
+                }}
+              />
+            ))}
         </div>
 
         {/* ========== TRACKING STATE ========== */}
