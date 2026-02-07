@@ -3,7 +3,7 @@
 import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
 import { useMoodTimeline } from "@/hooks/use-mood-timeline";
-import { MoodTimelineChart } from "@/components/mood-timeline-chart";
+import { MoodCharts } from "@/components/mood-charts";
 
 // Labels for each emotion to display in the UI
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -175,12 +175,12 @@ export default function Page() {
               ))}
             </div>
 
-            {/* Mood timeline chart */}
+            {/* Mood timeline / heatmap charts */}
             <div className="space-y-2">
               <h2 className="text-sm font-medium text-foreground">
                 Mood Over Time
               </h2>
-              <MoodTimelineChart data={timeline} />
+              <MoodCharts data={timeline} />
             </div>
 
             {/* Total detections counter */}
@@ -264,13 +264,13 @@ export default function Page() {
                   ))}
                 </div>
 
-                {/* Mood timeline chart */}
+                {/* Mood timeline / heatmap charts */}
                 {timeline.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-foreground">
                       Mood Over Time
                     </h3>
-                    <MoodTimelineChart data={timeline} />
+                    <MoodCharts data={timeline} />
                   </div>
                 )}
               </>
