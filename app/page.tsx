@@ -140,13 +140,24 @@ export default function Page() {
             {/* Border glow ring */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] -z-0" />
 
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/[0.06] bg-card">
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${
+                status === "loading" ? "aspect-video" : ""
+              }`}
+            >
+              {/*
+                The video is rendered as a block element at full width so its
+                natural aspect ratio determines the container height. This
+                avoids distortion on mobile cameras (which often output 4:3 or
+                portrait feeds) and keeps percentage-based bounding boxes
+                aligned perfectly.
+              */}
               <video
                 ref={videoRef}
                 autoPlay
                 muted
                 playsInline
-                className="absolute inset-0 h-full w-full object-fill"
+                className="block w-full"
                 aria-label="Live webcam feed for emotion detection"
               />
 

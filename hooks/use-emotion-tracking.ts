@@ -164,6 +164,14 @@ export function useEmotionTracking() {
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       ]);
 
+      // Guard: mediaDevices is only available in secure contexts (HTTPS / localhost)
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error(
+          "Camera access requires a secure connection (HTTPS or localhost). " +
+          "If accessing remotely, use HTTPS or open the app on localhost."
+        );
+      }
+
       // Request webcam permission from the browser
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
