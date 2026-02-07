@@ -41,7 +41,7 @@ export function EventikChat({ sessionData }: EventikChatProps) {
       console.log("Starting chat with session data");
       sendMessage(
         { text: "Please analyze the event results for this session." },
-        { body: { sessionData } }
+        { body: { sessionData } },
       );
     }
   }, [sessionData, sendMessage]);
@@ -56,14 +56,20 @@ export function EventikChat({ sessionData }: EventikChatProps) {
         </div>
         <div>
           <h3 className="text-sm font-semibold">Eventik AI</h3>
-          <p className="text-xs text-muted-foreground">Strategic Mood Analyst</p>
+          <p className="text-xs text-muted-foreground">
+            Strategic Mood Analyst
+          </p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !error && (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            <p>{sessionData ? "Analyzing event data..." : "Ready to chat about your event."}</p>
+            <p>
+              {sessionData
+                ? "Analyzing event data..."
+                : "Ready to chat about your event."}
+            </p>
           </div>
         )}
 
@@ -75,7 +81,11 @@ export function EventikChat({ sessionData }: EventikChatProps) {
 
         {messages.map((m) => {
           // Hide the auto-start message from the user
-          if (m.role === "user" && getMessageText(m) === "Please analyze the event results for this session.") {
+          if (
+            m.role === "user" &&
+            getMessageText(m) ===
+              "Please analyze the event results for this session."
+          ) {
             return null;
           }
 
@@ -88,7 +98,9 @@ export function EventikChat({ sessionData }: EventikChatProps) {
             >
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                  m.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
                 }`}
               >
                 {m.role === "user" ? (
