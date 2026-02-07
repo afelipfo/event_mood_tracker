@@ -21,13 +21,13 @@ const EMOTION_LABELS: Record<(typeof EMOTIONS)[number], string> = {
   bored: "Bored",
 };
 
-/** HSL hue + saturation for each emotion (lightness/opacity will vary) */
+/** HSL hue + saturation for each emotion -- matched to the global palette */
 const EMOTION_HSL: Record<(typeof EMOTIONS)[number], [number, number]> = {
-  happy: [160, 84],
-  neutral: [215, 14],
-  surprised: [38, 92],
-  sad: [217, 91],
-  angry: [0, 84],
+  happy: [43, 96],
+  neutral: [220, 12],
+  surprised: [32, 95],
+  sad: [215, 60],
+  angry: [348, 72],
   bored: [270, 50],
 };
 
@@ -44,14 +44,14 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
         if (snapshot[emotion] > max) max = snapshot[emotion];
       }
     }
-    return max || 1; // avoid division by zero
+    return max || 1;
   }, [data]);
 
   if (data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-md border border-dashed border-border bg-muted/30">
-        <p className="text-center text-sm text-muted-foreground px-4">
-          Mood heatmap will appear here after the first 30 seconds of tracking.
+      <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-white/[0.08] bg-white/[0.02]">
+        <p className="text-center text-xs text-muted-foreground/60 px-4">
+          Heatmap will appear after the first 30 seconds of tracking.
         </p>
       </div>
     );
@@ -62,8 +62,8 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
       <div
         className="grid gap-px"
         style={{
-          gridTemplateColumns: `4rem repeat(${data.length}, minmax(2.5rem, 1fr))`,
-          gridTemplateRows: `1.5rem repeat(${EMOTIONS.length}, 2rem)`,
+          gridTemplateColumns: `3.5rem repeat(${data.length}, minmax(2rem, 1fr))`,
+          gridTemplateRows: `1.25rem repeat(${EMOTIONS.length}, 1.75rem)`,
         }}
       >
         {/* Top-left empty corner */}
@@ -73,7 +73,7 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
         {data.map((snapshot) => (
           <div
             key={snapshot.label}
-            className="flex items-end justify-center text-[10px] text-muted-foreground truncate px-0.5"
+            className="flex items-end justify-center text-[9px] text-muted-foreground/50 truncate px-0.5"
           >
             {snapshot.label}
           </div>
@@ -85,7 +85,7 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
             {/* Row label */}
             <div
               key={`label-${emotion}`}
-              className="flex items-center text-xs text-muted-foreground pr-2 justify-end"
+              className="flex items-center text-[10px] text-muted-foreground pr-2 justify-end"
             >
               {EMOTION_LABELS[emotion]}
             </div>
@@ -99,14 +99,14 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
               return (
                 <div
                   key={`${emotion}-${snapshot.label}`}
-                  className="rounded-sm transition-colors group relative"
+                  className="rounded-[3px] transition-colors group relative"
                   style={{
-                    backgroundColor: `hsla(${h}, ${s}%, 50%, ${intensity * 0.9 + 0.05})`,
+                    backgroundColor: `hsla(${h}, ${s}%, 55%, ${intensity * 0.85 + 0.04})`,
                   }}
                   title={`${EMOTION_LABELS[emotion]} at ${snapshot.label}: ${value}%`}
                 >
                   {/* Hover tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 whitespace-nowrap rounded bg-popover border border-border px-2 py-1 text-[10px] text-popover-foreground shadow-md">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 whitespace-nowrap rounded-md bg-card border border-white/[0.08] px-2 py-1 text-[9px] text-foreground/80 shadow-lg">
                     {EMOTION_LABELS[emotion]}: {value}%
                   </div>
                 </div>
@@ -117,15 +117,15 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground">
+      <div className="mt-3 flex items-center justify-center gap-1.5 text-[9px] text-muted-foreground/50">
         <span>Low</span>
         <div className="flex gap-px">
-          {[0.1, 0.3, 0.5, 0.7, 0.9].map((opacity) => (
+          {[0.08, 0.25, 0.45, 0.65, 0.85].map((opacity) => (
             <div
               key={opacity}
-              className="h-3 w-5 rounded-sm"
+              className="h-2.5 w-4 rounded-[2px]"
               style={{
-                backgroundColor: `hsla(215, 50%, 50%, ${opacity})`,
+                backgroundColor: `hsla(38, 92%, 55%, ${opacity})`,
               }}
             />
           ))}
