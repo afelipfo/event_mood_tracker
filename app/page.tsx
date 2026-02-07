@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
 import { useMoodTimeline } from "@/hooks/use-mood-timeline";
@@ -44,10 +45,13 @@ export default function Page() {
   } = useEmotionTracking();
 
   const { timeline } = useMoodTimeline(emotionCounts, status === "tracking");
+  const [showEmojis, setShowEmojis] = useState(true);
 
   return (
     <>
-      <FloatingEmojis emotion={status === "tracking" ? currentEmotion : null} />
+      <FloatingEmojis
+        emotion={status === "tracking" && showEmojis ? currentEmotion : null}
+      />
       <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
         <div className="w-full max-w-2xl">
           {/* Application Title */}
@@ -194,6 +198,28 @@ export default function Page() {
               <p className="text-center text-xs text-muted-foreground">
                 Total detections: {totalDetections}
               </p>
+
+              {/* Toggle floating emojis */}
+              <label className="flex items-center justify-center gap-2 cursor-pointer select-none">
+                <span className="text-xs text-muted-foreground">
+                  Floating Emojis
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showEmojis}
+                  onClick={() => setShowEmojis((v) => !v)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                    showEmojis ? "bg-foreground" : "bg-muted-foreground/30"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
+                      showEmojis ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+              </label>
 
               {/* End Event button */}
               <button
