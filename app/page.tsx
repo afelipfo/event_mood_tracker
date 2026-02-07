@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatedAudience } from "@/components/animated-audience";
 import { useEmotionTracking } from "@/hooks/use-emotion-tracking";
 import type { Emotion } from "@/hooks/use-emotion-tracking";
 import { useMoodTimeline } from "@/hooks/use-mood-timeline";
@@ -190,6 +191,7 @@ export default function Page() {
           ════════════════════════════════════════════ */}
           {status === "tracking" && (
             <div className="mt-8 flex flex-col gap-8 animate-fade-in">
+              <AnimatedAudience emotion={currentEmotion} />
               {/* Current dominant emotion */}
               {currentEmotion && (
                 <div className="text-center">

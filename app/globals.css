@@ -198,3 +198,160 @@ body::before {
   will-change: transform, opacity;
   user-select: none;
 }
+
+/* ===== Animated audience keyframes ===== */
+
+/* Body movements */
+@keyframes audienceBounce {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-8px) scaleY(1.02); }
+  75% { transform: translateY(0) scaleY(0.98); } /* Landing squash */
+}
+
+@keyframes audienceWave {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(-2deg); }
+  75% { transform: translateY(-4px) rotate(2deg); }
+}
+
+@keyframes audienceSlump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(5px) scale(0.97); }
+}
+
+@keyframes audienceShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px); }
+  30% { transform: translateX(3px); }
+  50% { transform: translateX(-3px); }
+  70% { transform: translateX(3px); }
+  90% { transform: translateX(-2px); }
+}
+
+@keyframes audienceIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes audienceSurpriseJump {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-16px); }
+  60% { transform: translateY(-14px); }
+}
+
+/* Head movements */
+@keyframes audienceHeadNod {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(1.5px) rotate(2deg); }
+}
+
+/* Arm movements */
+@keyframes audienceClapLeft {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(-25deg); }
+}
+
+@keyframes audienceClapRight {
+  0%, 100% { transform: rotate(-30deg); }
+  50% { transform: rotate(25deg); }
+}
+
+@keyframes audienceRaiseArms {
+  0%, 100% { transform: rotate(-60deg); }
+  50% { transform: rotate(-100deg); }
+}
+
+@keyframes audienceSlumpArms {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(45deg); }
+}
+
+@keyframes audienceShakeArms {
+  0%, 100% { transform: rotate(25deg); }
+  25% { transform: rotate(10deg); }
+  75% { transform: rotate(40deg); }
+}
+
+@keyframes audienceIdleArms {
+  0%, 100% { transform: rotate(30deg); }
+  50% { transform: rotate(35deg); }
+}
+
+@keyframes audienceSurpriseArms {
+  0%, 100% { transform: rotate(-80deg); }
+  50% { transform: rotate(-110deg); }
+}
+
+/* Eye blink */
+@keyframes audienceEyeBlink {
+  0%, 42%, 44%, 100% { transform: scaleY(1); }
+  43% { transform: scaleY(0.1); }
+}
+
+/* Atmosphere & Props */
+@keyframes audienceSpotlightMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes audiencePhoneFlash {
+  0%, 90%, 100% { opacity: 0; }
+  92% { opacity: 1; }
+  94% { opacity: 0; }
+  96% { opacity: 0.8; }
+}
+
+@keyframes audienceConfettiFall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+}
+
+/* ===== Animated audience utility classes ===== */
+
+/* Body */
+.audience-bounce { animation: audienceBounce 0.6s ease-in-out infinite; }
+.audience-wave { animation: audienceWave 0.8s ease-in-out infinite; }
+.audience-slump { animation: audienceSlump 1.4s ease-in-out infinite; }
+.audience-shake { animation: audienceShake 0.35s ease-in-out infinite; }
+.audience-idle { animation: audienceIdle 3s ease-in-out infinite; }
+.audience-surprise-jump { animation: audienceSurpriseJump 0.65s ease-in-out infinite; }
+
+/* Head */
+.audience-head-nod { animation: audienceHeadNod 0.6s ease-in-out infinite; }
+
+/* Arms */
+.audience-clap-left { animation: audienceClapLeft 0.35s ease-in-out infinite; }
+.audience-clap-right { animation: audienceClapRight 0.35s ease-in-out infinite; }
+.audience-raise-arms { animation: audienceRaiseArms 0.5s ease-in-out infinite; }
+.audience-slump-arms { animation: audienceSlumpArms 1.4s ease-in-out infinite; }
+.audience-shake-arms { animation: audienceShakeArms 0.25s ease-in-out infinite; }
+.audience-idle-arms { animation: audienceIdleArms 3s ease-in-out infinite; }
+.audience-surprise-arms { animation: audienceSurpriseArms 0.65s ease-in-out infinite; }
+
+/* Eyes */
+.audience-eye-blink { animation: audienceEyeBlink 4s ease-in-out infinite; }
+
+/* Atmosphere */
+.audience-spotlights {
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 70% 20%, rgba(232, 121, 249, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(250, 204, 21, 0.1) 0%, transparent 50%);
+  background-size: 200% 200%;
+  animation: audienceSpotlightMove 8s ease-in-out infinite;
+}
+
+.audience-phone-flash {
+  animation: audiencePhoneFlash 3s linear infinite;
+}
+
+.audience-glow-stick {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.audience-confetti-particle {
+  animation: audienceConfettiFall 3s linear infinite;
+  transform-origin: center;
+}
