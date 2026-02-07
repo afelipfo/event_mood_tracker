@@ -56,6 +56,38 @@ export default function Page() {
   const { timeline } = useMoodTimeline(emotionCounts, status === "tracking");
   const [showEmojis, setShowEmojis] = useState(true);
 
+  const [saving, setSaving] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const handleEndEvent = async () => {
+    stopTracking();
+    setSaving(true);
+
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalDetections,
+          dominantMood: dominantEventEmotion,
+          emotionPercentages,
+          timelineData: timeline,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.session) {
+          setSessionId(data.session.id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save session:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
       <FloatingEmojis
@@ -127,23 +159,20 @@ export default function Page() {
               Always rendered so videoRef is available
           ════════════════════════════════════════════ */}
           <div
-            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
-              status === "loading" || status === "tracking"
+            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${status === "loading" || status === "tracking"
                 ? "block"
                 : "hidden"
-            } ${
-              currentEmotion
+              } ${currentEmotion
                 ? EMOTION_GLOW_CLASS[currentEmotion]
                 : "ambient-glow"
-            }`}
+              }`}
           >
             {/* Border glow ring */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] -z-0" />
 
             <div
-              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${
-                status === "loading" ? "aspect-video" : ""
-              }`}
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${status === "loading" ? "aspect-video" : ""
+                }`}
             >
               {/*
                 The video is rendered as a block element at full width so its
@@ -241,11 +270,10 @@ export default function Page() {
                         </div>
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                           <div
-                            className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${
-                              currentEmotion === emotion
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${currentEmotion === emotion
                                 ? "opacity-100"
                                 : "opacity-60"
-                            }`}
+                              }`}
                             style={{
                               width: `${emotionPercentages[emotion]}%`,
                             }}
@@ -280,14 +308,12 @@ export default function Page() {
                   role="switch"
                   aria-checked={showEmojis}
                   onClick={() => setShowEmojis((v) => !v)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                    showEmojis ? "bg-primary" : "bg-white/[0.08]"
-                  }`}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${showEmojis ? "bg-primary" : "bg-white/[0.08]"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
-                      showEmojis ? "translate-x-4" : "translate-x-0.5"
-                    }`}
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${showEmojis ? "translate-x-4" : "translate-x-0.5"
+                      }`}
                   />
                 </button>
               </label>
@@ -295,10 +321,11 @@ export default function Page() {
               {/* End Event button */}
               <button
                 type="button"
-                onClick={stopTracking}
-                className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-foreground"
+                onClick={handleEndEvent}
+                disabled={saving}
+                className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-foreground disabled:opacity-50"
               >
-                End Session
+                {saving ? "Saving..." : "End Session"}
               </button>
             </div>
           )}
@@ -389,11 +416,10 @@ export default function Page() {
                             </div>
                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                               <div
-                                className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${
-                                  dominantEventEmotion === emotion
+                                className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${dominantEventEmotion === emotion
                                     ? "opacity-100"
                                     : "opacity-50"
-                                }`}
+                                  }`}
                                 style={{
                                   width: `${emotionPercentages[emotion]}%`,
                                   animation: "bar-fill 0.8s ease-out",
@@ -434,16 +460,7 @@ export default function Page() {
                     <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                       Eventik Analysis
                     </h3>
-                    <EventikChat
-                      emotionCounts={emotionCounts}
-                      totalDetections={totalDetections}
-                      emotionPercentages={emotionPercentages}
-                      dominantMood={
-                        dominantEventEmotion
-                          ? EMOTION_LABELS[dominantEventEmotion]
-                          : null
-                      }
-                    />
+                    <EventikChat sessionId={sessionId} />
                   </div>
                 </>
               )}
