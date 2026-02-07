@@ -9,7 +9,7 @@ import { FloatingEmojis } from "@/components/floating-emojis";
 import { EngagementScoreGauge } from "@/components/engagement-score-gauge";
 import { EventikChat } from "@/components/eventik-chat";
 
-// Labels for each emotion to display in the UI
+/* ── Emotion display config ── */
 const EMOTION_LABELS: Record<Emotion, string> = {
   happy: "Happy",
   neutral: "Neutral",
@@ -19,14 +19,22 @@ const EMOTION_LABELS: Record<Emotion, string> = {
   bored: "Bored",
 };
 
-// Simple color mapping for progress bars (Tailwind bg classes)
-const EMOTION_COLORS: Record<Emotion, string> = {
-  happy: "bg-emerald-500",
-  neutral: "bg-slate-400",
-  surprised: "bg-amber-500",
-  sad: "bg-blue-500",
-  angry: "bg-red-500",
-  bored: "bg-purple-500",
+const EMOTION_BAR_COLORS: Record<Emotion, string> = {
+  happy: "bg-[hsl(43,96%,58%)]",
+  neutral: "bg-[hsl(220,12%,50%)]",
+  surprised: "bg-[hsl(32,95%,55%)]",
+  sad: "bg-[hsl(215,60%,50%)]",
+  angry: "bg-[hsl(348,72%,52%)]",
+  bored: "bg-[hsl(270,50%,58%)]",
+};
+
+const EMOTION_GLOW_CLASS: Record<Emotion, string> = {
+  happy: "emotion-glow-happy",
+  neutral: "emotion-glow-neutral",
+  surprised: "emotion-glow-surprised",
+  sad: "emotion-glow-sad",
+  angry: "emotion-glow-angry",
+  bored: "emotion-glow-bored",
 };
 
 export default function Page() {
@@ -53,157 +61,218 @@ export default function Page() {
       <FloatingEmojis
         emotion={status === "tracking" && showEmojis ? currentEmotion : null}
       />
-      <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
-        <div className="w-full max-w-2xl">
-          {/* Application Title */}
-          <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-foreground">
-            Event Mood Tracker
-          </h1>
-          <p className="mb-8 text-center text-sm text-muted-foreground">
-            Detect audience mood in real-time using facial expression analysis
-          </p>
-
-          {/* Error display */}
+      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-lg">
+          {/* ── Error display ── */}
           {error && (
-            <div className="mb-6 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-8 animate-fade-in rounded-xl border border-[hsl(348,72%,52%,0.2)] bg-[hsl(348,72%,52%,0.06)] px-5 py-4 text-sm text-[hsl(348,72%,80%)]">
               {error}
             </div>
           )}
 
-          {/* ========== IDLE STATE ========== */}
+          {/* ════════════════════════════════════════════
+              IDLE STATE
+          ════════════════════════════════════════════ */}
           {status === "idle" && (
-            <div className="flex flex-col items-center gap-6">
-              <p className="text-center text-muted-foreground">
-                Click the button below to start tracking the mood of your
-                audience using your webcam.
-              </p>
+            <div className="flex flex-col items-center gap-10">
+              {/* Headline */}
+              <div className="space-y-4 text-center">
+                <p
+                  className="animate-fade-in text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground"
+                  style={{ animationDelay: "0ms" }}
+                >
+                  Real-time emotion analysis
+                </p>
+                <h1
+                  className="animate-fade-in font-serif text-5xl leading-[1.1] tracking-tight text-foreground sm:text-6xl"
+                  style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
+                >
+                  Event Mood
+                  <br />
+                  <span className="text-primary">Tracker</span>
+                </h1>
+                <p
+                  className="animate-fade-in mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground"
+                  style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
+                >
+                  Detect the emotional pulse of your audience through facial
+                  expression analysis, live from your webcam.
+                </p>
+              </div>
+
+              {/* CTA Button */}
               <button
                 type="button"
                 onClick={startTracking}
-                className="rounded-md bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                className="animate-fade-in group relative rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
+                style={{ animationDelay: "350ms", animationFillMode: "backwards" }}
               >
-                Start Mood Tracking
+                Begin Tracking
               </button>
-              <p className="text-center text-xs text-muted-foreground">
-                No video or images are stored. Only aggregated emotion
-                statistics are kept in memory.
+
+              {/* Privacy footnote */}
+              <p
+                className="animate-fade-in text-center text-[11px] leading-relaxed text-muted-foreground/60"
+                style={{ animationDelay: "450ms", animationFillMode: "backwards" }}
+              >
+                No video or images are stored.
+                <br />
+                Only aggregated statistics are kept in memory.
               </p>
             </div>
           )}
 
-          {/* 
-          Video element is always rendered so videoRef is available when 
-          the hook attaches the stream during the loading phase.
-          It is hidden until we are in "loading" or "tracking" state.
-        */}
+          {/* ════════════════════════════════════════════
+              VIDEO ELEMENT
+              Always rendered so videoRef is available
+          ════════════════════════════════════════════ */}
           <div
-            className={`relative overflow-hidden rounded-md border border-border bg-muted ${
-              status === "loading" || status === "tracking" ? "block" : "hidden"
-            } ${status === "loading" ? "aspect-video" : ""}`}
+            className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
+              status === "loading" || status === "tracking"
+                ? "block"
+                : "hidden"
+            } ${
+              currentEmotion
+                ? EMOTION_GLOW_CLASS[currentEmotion]
+                : "ambient-glow"
+            }`}
           >
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              /* 
-                      The video is rendered as a block element at full width so its natural
-                      aspect ratio determines the container height. This avoids distortion
-                      on mobile cameras (which often output 4:3 or portrait feeds) and
-                      keeps percentage-based bounding boxes aligned perfectly.
-                    */
-              className="block w-full"
-              aria-label="Live webcam feed for emotion detection"
-            />
-            {status === "loading" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted/80">
-                <p className="text-sm text-muted-foreground">
-                  Loading face detection models...
-                </p>
-                <p className="text-xs text-muted-foreground">Please wait</p>
-              </div>
-            )}
+            {/* Border glow ring */}
+            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] -z-0" />
 
-            {/* Face Bounding Boxes Overlay */}
-            {status === "tracking" &&
-              faceBoxes.map((box, idx) => (
-                <div
-                  key={idx}
-                  className="absolute border-2 border-primary/80 bg-primary/10 transition-all duration-100 ease-linear"
-                  style={{
-                    left: `${box.x}%`,
-                    top: `${box.y}%`,
-                    width: `${box.width}%`,
-                    height: `${box.height}%`,
-                  }}
-                />
-              ))}
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${
+                status === "loading" ? "aspect-video" : ""
+              }`}
+            >
+              {/*
+                The video is rendered as a block element at full width so its
+                natural aspect ratio determines the container height. This
+                avoids distortion on mobile cameras (which often output 4:3 or
+                portrait feeds) and keeps percentage-based bounding boxes
+                aligned perfectly.
+              */}
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="block w-full"
+                aria-label="Live webcam feed for emotion detection"
+              />
+
+              {/* Face Bounding Boxes Overlay */}
+              {status === "tracking" &&
+                faceBoxes.map((box, idx) => (
+                  <div
+                    key={idx}
+                    className="absolute rounded-md border border-primary/60 bg-primary/[0.06] transition-all duration-100 ease-linear"
+                    style={{
+                      left: `${box.x}%`,
+                      top: `${box.y}%`,
+                      width: `${box.width}%`,
+                      height: `${box.height}%`,
+                    }}
+                  />
+                ))}
+
+              {/* Loading overlay */}
+              {status === "loading" && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-card/90 backdrop-blur-sm">
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="h-2 w-2 rounded-full bg-primary animate-pulse-dot"
+                        style={{ animationDelay: `${i * 0.2}s` }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Loading face detection models
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* ========== TRACKING STATE ========== */}
+          {/* ════════════════════════════════════════════
+              TRACKING STATE
+          ════════════════════════════════════════════ */}
           {status === "tracking" && (
-            <div className="mt-6 flex flex-col gap-6">
+            <div className="mt-8 flex flex-col gap-8 animate-fade-in">
               {/* Current dominant emotion */}
               {currentEmotion && (
                 <div className="text-center">
-                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
                     Current Mood
-                  </span>
-                  <p className="mt-1 text-2xl font-bold text-foreground">
+                  </p>
+                  <p className="mt-2 font-serif text-4xl tracking-tight text-foreground">
                     {EMOTION_LABELS[currentEmotion]}
                   </p>
                 </div>
               )}
 
-              {/* Engagement gauge + Live distribution side by side */}
-              <div className="flex items-center gap-6">
+              {/* Engagement gauge + Live distribution */}
+              <div className="flex items-start gap-6">
                 <EngagementScoreGauge emotionPercentages={emotionPercentages} />
 
-                {/* Live emotion percentage distribution */}
-                <div className="min-w-0 flex-1 space-y-3">
-                  <h2 className="text-sm font-medium text-foreground">
-                    Live Distribution
-                  </h2>
-                  {emotions.map((emotion) => (
-                    <div key={emotion} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{EMOTION_LABELS[emotion]}</span>
-                        <span>{emotionPercentages[emotion]}%</span>
+                {/* Live emotion distribution */}
+                <div className="glass-card min-w-0 flex-1 p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                      Live Distribution
+                    </h2>
+                    <span className="text-[10px] tabular-nums text-muted-foreground/60">
+                      {totalDetections} detections
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {emotions.map((emotion) => (
+                      <div key={emotion} className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-foreground/70">
+                            {EMOTION_LABELS[emotion]}
+                          </span>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {emotionPercentages[emotion]}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ease-out ${EMOTION_BAR_COLORS[emotion]} ${
+                              currentEmotion === emotion
+                                ? "opacity-100"
+                                : "opacity-60"
+                            }`}
+                            style={{
+                              width: `${emotionPercentages[emotion]}%`,
+                            }}
+                            role="progressbar"
+                            aria-valuenow={emotionPercentages[emotion]}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={`${EMOTION_LABELS[emotion]} percentage`}
+                          />
+                        </div>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
-                          style={{
-                            width: `${emotionPercentages[emotion]}%`,
-                          }}
-                          role="progressbar"
-                          aria-valuenow={emotionPercentages[emotion]}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-label={`${EMOTION_LABELS[emotion]} percentage`}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {/* Mood timeline / heatmap charts */}
-              <div className="space-y-2">
-                <h2 className="text-sm font-medium text-foreground">
+              <div className="glass-card p-6 space-y-3">
+                <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                   Mood Over Time
                 </h2>
                 <MoodCharts data={timeline} />
               </div>
 
-              {/* Total detections counter */}
-              <p className="text-center text-xs text-muted-foreground">
-                Total detections: {totalDetections}
-              </p>
-
               {/* Toggle floating emojis */}
-              <label className="flex items-center justify-center gap-2 cursor-pointer select-none">
-                <span className="text-xs text-muted-foreground">
+              <label className="flex items-center justify-center gap-3 cursor-pointer select-none">
+                <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
                   Floating Emojis
                 </span>
                 <button
@@ -212,7 +281,7 @@ export default function Page() {
                   aria-checked={showEmojis}
                   onClick={() => setShowEmojis((v) => !v)}
                   className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                    showEmojis ? "bg-foreground" : "bg-muted-foreground/30"
+                    showEmojis ? "bg-primary" : "bg-white/[0.08]"
                   }`}
                 >
                   <span
@@ -227,86 +296,130 @@ export default function Page() {
               <button
                 type="button"
                 onClick={stopTracking}
-                className="w-full rounded-md border border-border bg-background px-6 py-3 text-sm font-medium text-foreground transition-opacity hover:bg-muted"
+                className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-foreground"
               >
-                End Event
+                End Session
               </button>
             </div>
           )}
 
-          {/* ========== SUMMARY STATE ========== */}
+          {/* ════════════════════════════════════════════
+              SUMMARY STATE
+          ════════════════════════════════════════════ */}
           {status === "summary" && (
-            <div className="flex flex-col gap-6">
-              <h2 className="text-center text-xl font-semibold text-foreground">
-                Event Summary
-              </h2>
+            <div className="flex flex-col gap-8">
+              {/* Header */}
+              <div
+                className="text-center animate-fade-in"
+                style={{ animationDelay: "0ms" }}
+              >
+                <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                  Session Complete
+                </p>
+                <h2 className="mt-2 font-serif text-3xl tracking-tight text-foreground">
+                  Event Summary
+                </h2>
+              </div>
 
               {totalDetections === 0 ? (
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="animate-fade-in text-center text-sm text-muted-foreground">
                   No faces were detected during the event.
                 </p>
               ) : (
                 <>
-                  {/* Total detections */}
-                  <div className="rounded-md border border-border bg-muted/50 px-4 py-3 text-center">
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Total Detections
-                    </span>
-                    <p className="mt-1 text-2xl font-bold text-foreground">
-                      {totalDetections}
-                    </p>
-                  </div>
-
-                  {/* Dominant mood of the event */}
-                  {dominantEventEmotion && (
-                    <div className="rounded-md border border-border bg-muted/50 px-4 py-3 text-center">
-                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Dominant Mood
-                      </span>
-                      <p className="mt-1 text-2xl font-bold text-foreground">
-                        {EMOTION_LABELS[dominantEventEmotion]}
+                  {/* Stats row */}
+                  <div
+                    className="grid grid-cols-2 gap-3 animate-fade-in"
+                    style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
+                  >
+                    {/* Total detections */}
+                    <div className="glass-card px-5 py-4 text-center">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                        Detections
+                      </p>
+                      <p className="mt-1.5 text-3xl font-light tabular-nums text-foreground">
+                        {totalDetections}
                       </p>
                     </div>
-                  )}
 
-                  {/* Engagement gauge + Emotion breakdown side by side */}
-                  <div className="flex items-center gap-6">
-                    <EngagementScoreGauge
-                      emotionPercentages={emotionPercentages}
-                    />
+                    {/* Dominant mood */}
+                    {dominantEventEmotion && (
+                      <div className="glass-card px-5 py-4 text-center">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                          Dominant
+                        </p>
+                        <p className="mt-1.5 font-serif text-2xl tracking-tight text-primary">
+                          {EMOTION_LABELS[dominantEventEmotion]}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="min-w-0 flex-1 space-y-3">
-                      <h3 className="text-sm font-medium text-foreground">
+                  {/* Engagement gauge + Emotion breakdown */}
+                  <div
+                    className="flex items-start gap-6 animate-slide-up"
+                    style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
+                  >
+                    <EngagementScoreGauge emotionPercentages={emotionPercentages} />
+
+                    <div
+                      className="glass-card min-w-0 flex-1 p-6 space-y-4"
+                    >
+                      <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Emotion Breakdown
                       </h3>
-                      {emotions.map((emotion) => (
-                        <div key={emotion} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{EMOTION_LABELS[emotion]}</span>
-                            <span>{emotionPercentages[emotion]}%</span>
+
+                      <div className="space-y-3">
+                        {emotions.map((emotion, i) => (
+                          <div
+                            key={emotion}
+                            className="space-y-1.5 animate-fade-in"
+                            style={{
+                              animationDelay: `${350 + i * 80}ms`,
+                              animationFillMode: "backwards",
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-foreground/70">
+                                {EMOTION_LABELS[emotion]}
+                              </span>
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {emotionPercentages[emotion]}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                              <div
+                                className={`h-full rounded-full ${EMOTION_BAR_COLORS[emotion]} ${
+                                  dominantEventEmotion === emotion
+                                    ? "opacity-100"
+                                    : "opacity-50"
+                                }`}
+                                style={{
+                                  width: `${emotionPercentages[emotion]}%`,
+                                  animation: "bar-fill 0.8s ease-out",
+                                  animationDelay: `${400 + i * 80}ms`,
+                                  animationFillMode: "backwards",
+                                }}
+                                role="progressbar"
+                                aria-valuenow={emotionPercentages[emotion]}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={`${EMOTION_LABELS[emotion]} percentage`}
+                              />
+                            </div>
                           </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className={`h-full rounded-full ${EMOTION_COLORS[emotion]}`}
-                              style={{
-                                width: `${emotionPercentages[emotion]}%`,
-                              }}
-                              role="progressbar"
-                              aria-valuenow={emotionPercentages[emotion]}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`${EMOTION_LABELS[emotion]} percentage`}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
 
                   {/* Mood timeline / heatmap charts */}
                   {timeline.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-foreground">
+                    <div
+                      className="glass-card p-6 space-y-3 animate-slide-up"
+                      style={{ animationDelay: "400ms", animationFillMode: "backwards" }}
+                    >
+                      <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Mood Over Time
                       </h3>
                       <MoodCharts data={timeline} />
@@ -314,8 +427,11 @@ export default function Page() {
                   )}
 
                   {/* Eventik Chatbot */}
-                  <div className="space-y-2 mt-4">
-                    <h3 className="text-sm font-medium text-foreground">
+                  <div
+                    className="glass-card p-6 space-y-3 animate-slide-up"
+                    style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
+                  >
+                    <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                       Eventik Analysis
                     </h3>
                     <EventikChat
@@ -332,11 +448,12 @@ export default function Page() {
                 </>
               )}
 
-              {/* Restart button to go back to idle state */}
+              {/* New Session button */}
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="w-full rounded-md bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                className="animate-fade-in w-full rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
+                style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
               >
                 Start New Session
               </button>
