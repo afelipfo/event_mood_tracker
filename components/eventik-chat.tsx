@@ -6,47 +6,33 @@ import { Send, Bot, User } from "lucide-react";
 import type { EmotionCounts } from "@/hooks/use-emotion-tracking";
 
 interface EventikChatProps {
-    emotionCounts: EmotionCounts;
-    totalDetections: number;
-    emotionPercentages: Record<string, number>;
-    dominantMood: string | null;
+    sessionId: string | null;
 }
 
-export function EventikChat({
-    emotionCounts,
-    totalDetections,
-    emotionPercentages,
-    dominantMood,
-}: EventikChatProps) {
+export function EventikChat({ sessionId }: EventikChatProps) {
     const { messages, input, handleInputChange, handleSubmit, append } = useChat({
         api: "/api/chat",
     });
 
     const hasStartedRef = useRef(false);
 
-    // Auto-start the conversation with the event context
+    // Auto-start the conversation when sessionId is available
     useEffect(() => {
-        if (!hasStartedRef.current && totalDetections > 0) {
+        if (!hasStartedRef.current && sessionId) {
             hasStartedRef.current = true;
             // Send a hidden system-like message to trigger the initial analysis
-            // We pass the data in the 'body' so the server can inject it into the system prompt
+            // We pass the sessionId in the 'body' so the server can fetch context from DB
             append(
                 {
                     role: "user",
-                    content: "Please analyze my event results.",
+                    content: "Please analyze the event results for this session.",
                 },
                 {
-                    body: {
-                        context: {
-                            totalDetections,
-                            emotionPercentages,
-                            dominantMood,
-                        },
-                    },
+                    body: { sessionId },
                 }
             );
         }
-    }, [totalDetections, emotionPercentages, dominantMood, append]);
+    }, [sessionId, append]);
 
     return (
         <div className="flex h-[500px] w-full flex-col rounded-md border border-border bg-card shadow-sm">

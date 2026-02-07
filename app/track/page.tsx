@@ -56,6 +56,38 @@ export default function Page() {
   const { timeline } = useMoodTimeline(emotionCounts, status === "tracking");
   const [showEmojis, setShowEmojis] = useState(true);
 
+  const [saving, setSaving] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const handleEndEvent = async () => {
+    stopTracking();
+    setSaving(true);
+
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalDetections,
+          dominantMood: dominantEventEmotion,
+          emotionPercentages,
+          timelineData: timeline,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.session) {
+          setSessionId(data.session.id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save session:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
       <FloatingEmojis
@@ -85,10 +117,7 @@ export default function Page() {
                 </p>
                 <h1
                   className="animate-fade-in font-serif text-5xl leading-[1.1] tracking-tight text-foreground sm:text-6xl"
-                  style={{
-                    animationDelay: "100ms",
-                    animationFillMode: "backwards",
-                  }}
+                  style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
                 >
                   Event Mood
                   <br />
@@ -96,10 +125,7 @@ export default function Page() {
                 </h1>
                 <p
                   className="animate-fade-in mx-auto max-w-xs text-sm leading-relaxed text-muted-foreground"
-                  style={{
-                    animationDelay: "200ms",
-                    animationFillMode: "backwards",
-                  }}
+                  style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
                 >
                   Detect the emotional pulse of your audience through facial
                   expression analysis, live from your webcam.
@@ -111,10 +137,7 @@ export default function Page() {
                 type="button"
                 onClick={startTracking}
                 className="animate-fade-in group relative rounded-full bg-primary px-8 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
-                style={{
-                  animationDelay: "350ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "350ms", animationFillMode: "backwards" }}
               >
                 Begin Tracking
               </button>
@@ -122,10 +145,7 @@ export default function Page() {
               {/* Privacy footnote */}
               <p
                 className="animate-fade-in text-center text-[11px] leading-relaxed text-muted-foreground/60"
-                style={{
-                  animationDelay: "450ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "450ms", animationFillMode: "backwards" }}
               >
                 No video or images are stored.
                 <br />
@@ -140,7 +160,9 @@ export default function Page() {
           ════════════════════════════════════════════ */}
           <div
             className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
-              status === "loading" || status === "tracking" ? "block" : "hidden"
+              status === "loading" || status === "tracking"
+                ? "block"
+                : "hidden"
             } ${
               currentEmotion
                 ? EMOTION_GLOW_CLASS[currentEmotion]
@@ -150,13 +172,24 @@ export default function Page() {
             {/* Border glow ring */}
             <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] -z-0" />
 
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/[0.06] bg-card">
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-card ${
+                status === "loading" ? "aspect-video" : ""
+              }`}
+            >
+              {/*
+                The video is rendered as a block element at full width so its
+                natural aspect ratio determines the container height. This
+                avoids distortion on mobile cameras (which often output 4:3 or
+                portrait feeds) and keeps percentage-based bounding boxes
+                aligned perfectly.
+              */}
               <video
                 ref={videoRef}
                 autoPlay
                 muted
                 playsInline
-                className="absolute inset-0 h-full w-full object-fill"
+                className="block w-full"
                 aria-label="Live webcam feed for emotion detection"
               />
 
@@ -294,10 +327,11 @@ export default function Page() {
               {/* End Event button */}
               <button
                 type="button"
-                onClick={stopTracking}
-                className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-foreground"
+                onClick={handleEndEvent}
+                disabled={saving}
+                className="w-full rounded-full border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-foreground disabled:opacity-50"
               >
-                End Session
+                {saving ? "Saving..." : "End Session"}
               </button>
             </div>
           )}
@@ -329,10 +363,7 @@ export default function Page() {
                   {/* Stats row */}
                   <div
                     className="grid grid-cols-2 gap-3 animate-fade-in"
-                    style={{
-                      animationDelay: "100ms",
-                      animationFillMode: "backwards",
-                    }}
+                    style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
                   >
                     {/* Total detections */}
                     <div className="glass-card px-5 py-4 text-center">
@@ -360,16 +391,13 @@ export default function Page() {
                   {/* Engagement gauge + Emotion breakdown */}
                   <div
                     className="flex items-start gap-6 animate-slide-up"
-                    style={{
-                      animationDelay: "200ms",
-                      animationFillMode: "backwards",
-                    }}
+                    style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
                   >
-                    <EngagementScoreGauge
-                      emotionPercentages={emotionPercentages}
-                    />
+                    <EngagementScoreGauge emotionPercentages={emotionPercentages} />
 
-                    <div className="glass-card min-w-0 flex-1 p-6 space-y-4">
+                    <div
+                      className="glass-card min-w-0 flex-1 p-6 space-y-4"
+                    >
                       <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Emotion Breakdown
                       </h3>
@@ -422,10 +450,7 @@ export default function Page() {
                   {timeline.length > 0 && (
                     <div
                       className="glass-card p-6 space-y-3 animate-slide-up"
-                      style={{
-                        animationDelay: "400ms",
-                        animationFillMode: "backwards",
-                      }}
+                      style={{ animationDelay: "400ms", animationFillMode: "backwards" }}
                     >
                       <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                         Mood Over Time
@@ -437,24 +462,12 @@ export default function Page() {
                   {/* Eventik Chatbot */}
                   <div
                     className="glass-card p-6 space-y-3 animate-slide-up"
-                    style={{
-                      animationDelay: "500ms",
-                      animationFillMode: "backwards",
-                    }}
+                    style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
                   >
                     <h3 className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
                       Eventik Analysis
                     </h3>
-                    <EventikChat
-                      emotionCounts={emotionCounts}
-                      totalDetections={totalDetections}
-                      emotionPercentages={emotionPercentages}
-                      dominantMood={
-                        dominantEventEmotion
-                          ? EMOTION_LABELS[dominantEventEmotion]
-                          : null
-                      }
-                    />
+                    <EventikChat sessionId={sessionId} />
                   </div>
                 </>
               )}
@@ -464,10 +477,7 @@ export default function Page() {
                 type="button"
                 onClick={() => window.location.reload()}
                 className="animate-fade-in w-full rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_40px_-8px_hsl(38,92%,55%,0.4)]"
-                style={{
-                  animationDelay: "500ms",
-                  animationFillMode: "backwards",
-                }}
+                style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
               >
                 Start New Session
               </button>
