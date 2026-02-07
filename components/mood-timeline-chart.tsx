@@ -32,7 +32,7 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
     return (
       <div className="flex h-48 items-center justify-center rounded-md border border-dashed border-border bg-muted/30">
         <p className="text-center text-sm text-muted-foreground px-4">
-          Mood timeline will appear here after the first minute of tracking.
+          Mood timeline will appear here after the first 30 seconds of tracking.
         </p>
       </div>
     );
@@ -58,7 +58,7 @@ export function MoodTimelineChart({ data }: MoodTimelineChartProps) {
         <ChartTooltip
           content={
             <ChartTooltipContent
-              labelFormatter={(label) => `Minute ${label}`}
+              labelFormatter={(label) => `${label} elapsed`}
             />
           }
         />

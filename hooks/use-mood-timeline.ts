@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { EmotionCounts } from "./use-emotion-tracking";
 
 const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry"] as const;
-const SNAPSHOT_INTERVAL_MS = 60_000; // 1 minute
+const SNAPSHOT_INTERVAL_MS = 30_000; // 30 seconds
 const STORAGE_KEY = "mood-timeline";
 
 export interface MoodSnapshot {
@@ -62,9 +62,15 @@ export function useMoodTimeline(
 
     minuteRef.current += 1;
 
+    // Format label as m:ss (e.g. "0:30", "1:00", "1:30")
+    const totalSeconds = minuteRef.current * 30;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const label = `${mins}:${secs.toString().padStart(2, "0")}`;
+
     const snapshot: MoodSnapshot = {
       timestamp: Date.now(),
-      label: `${minuteRef.current}m`,
+      label,
       happy: Math.round((deltas.happy / totalDelta) * 100),
       neutral: Math.round((deltas.neutral / totalDelta) * 100),
       surprised: Math.round((deltas.surprised / totalDelta) * 100),
