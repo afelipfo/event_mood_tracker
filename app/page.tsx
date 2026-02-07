@@ -97,8 +97,9 @@ export default function Page() {
           It is hidden until we are in "loading" or "tracking" state.
         */}
           <div
-            className={`relative aspect-video overflow-hidden rounded-md border border-border bg-muted ${status === "loading" || status === "tracking" ? "block" : "hidden"
-              }`}
+            className={`relative overflow-hidden rounded-md border border-border bg-muted ${
+              status === "loading" || status === "tracking" ? "block" : "hidden"
+            } ${status === "loading" ? "aspect-video" : ""}`}
           >
             <video
               ref={videoRef}
@@ -106,11 +107,12 @@ export default function Page() {
               muted
               playsInline
               /* 
-                      Using object-fill ensures that the video stretches to fill the container 100%. 
-                      This guarantees that our percentage-based bounding boxes (calculated from source 
-                      dimensions) align perfectly with the displayed video, even if it distorts slightly.
+                      The video is rendered as a block element at full width so its natural
+                      aspect ratio determines the container height. This avoids distortion
+                      on mobile cameras (which often output 4:3 or portrait feeds) and
+                      keeps percentage-based bounding boxes aligned perfectly.
                     */
-              className="absolute inset-0 h-full w-full object-fill"
+              className="block w-full"
               aria-label="Live webcam feed for emotion detection"
             />
             {status === "loading" && (
