@@ -136,8 +136,11 @@ export default function Page() {
                 </h2>
                 <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                   <p>
-                    This application uses <strong className="text-foreground">facial expression analysis</strong> via
-                    your webcam to detect audience mood in real-time.
+                    This application uses{" "}
+                    <strong className="text-foreground">
+                      facial expression analysis
+                    </strong>{" "}
+                    via your webcam to detect audience mood in real-time.
                   </p>
                   <p>By continuing, you acknowledge that:</p>
                   <ul className="list-disc space-y-2 pl-5">
@@ -146,13 +149,16 @@ export default function Page() {
                       to detect facial expressions.
                     </li>
                     <li>
-                      <strong className="text-foreground">No video, images, or facial geometry</strong> are
-                      stored or transmitted. Only aggregated emotion statistics
-                      are kept in memory during your session.
+                      <strong className="text-foreground">
+                        No video, images, or facial geometry
+                      </strong>{" "}
+                      are stored or transmitted. Only aggregated emotion
+                      statistics are kept in memory during your session.
                     </li>
                     <li>
-                      All data is <strong className="text-foreground">ephemeral</strong> and destroyed when you
-                      close the tab or end the session.
+                      All data is{" "}
+                      <strong className="text-foreground">ephemeral</strong> and
+                      destroyed when you close the tab or end the session.
                     </li>
                     <li>
                       If you choose to use the AI analysis feature, anonymized
@@ -329,9 +335,7 @@ export default function Page() {
 
               {/* Engagement gauge + Live distribution */}
               <div className="flex items-start gap-6">
-                <EngagementScoreGauge
-                  emotionPercentages={emotionPercentages}
-                />
+                <EngagementScoreGauge emotionPercentages={emotionPercentages} />
 
                 {/* Live emotion distribution */}
                 <div className="glass-card min-w-0 flex-1 p-6 space-y-4">
