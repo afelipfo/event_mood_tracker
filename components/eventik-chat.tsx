@@ -3,17 +3,12 @@
 import { useChat } from "@ai-sdk/react";
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
-import type { UIMessage } from "ai";
+import type { Message } from "ai";
 
 /** Extract text content from a UIMessage's parts array */
+/** Extract text content from a UIMessage's parts array */
 function getMessageText(message: UIMessage): string {
-  if (Array.isArray(message.parts)) {
-    return message.parts
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("");
-  }
-  return message.content || "";
+  return message.content;
 }
 
 interface SessionData {
