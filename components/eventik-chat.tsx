@@ -1,18 +1,19 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import type { UIMessage } from "@ai-sdk/react";
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
-import type { UIMessage } from "ai";
 
-/** Extract text content from a UIMessage's parts array */
+/** Extract text content from a UIMessage's parts array or content string */
 function getMessageText(message: UIMessage): string {
-  if (Array.isArray(message.parts)) {
+  if ('parts' in message && Array.isArray(message.parts)) {
     return message.parts
       .filter((part): part is { type: "text"; text: string } => part.type === "text")
       .map((part) => part.text)
       .join("");
   }
+  // @ts-ignore: content might be present on some message types even if type definition is strict
   return message.content || "";
 }
 
@@ -28,34 +29,41 @@ interface EventikChatProps {
 }
 
 export function EventikChat({ sessionData }: EventikChatProps) {
-  const { messages, input, handleInputChange, handleSubmit, append, error } = useChat({
+  // useChat in this version returns limited helpers. input/handleInputChange/handleSubmit/append are missing in UseChatHelpers type.
+  // We must manage input state locally and use setMessages/sendMessage.
+  const { messages, sendMessage, status, error } = useChat({
     api: "/api/chat",
     onError: (err) => {
       console.error("Chat error:", err);
     }
   });
 
+  const [inputValue, setInputValue] = useState("");
   const hasStartedRef = useRef(false);
 
   // Auto-start the conversation when sessionData is available
   useEffect(() => {
-    // console.log("EventikChat mounted. SessionData available:", !!sessionData);
     if (!hasStartedRef.current && sessionData) {
       hasStartedRef.current = true;
       console.log("Starting chat with session data");
-      // Send a hidden system-like message to trigger the initial analysis
-      // We pass the full sessionData in the 'body' so the server can build context directly
-      append(
-        {
-          role: "user",
-          content: "Please analyze the event results for this session.",
-        },
-        {
-          body: { sessionData },
-        }
-      );
+
+      // Use sendMessage to trigger initial analysis
+      sendMessage("Please analyze the event results for this session.", {
+        body: { sessionData },
+      });
     }
-  }, [sessionData, append]);
+  }, [sessionData, sendMessage]);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+
+    // Send user message
+    sendMessage(inputValue, {
+      body: sessionData ? { sessionData } : undefined,
+    });
+    setInputValue("");
+  };
 
   return (
     <div className="flex h-[500px] w-full flex-col rounded-md border border-border bg-card shadow-sm">
@@ -84,7 +92,9 @@ export function EventikChat({ sessionData }: EventikChatProps) {
 
         {messages.map((m) => {
           // Start hidden filtering: Only hide if it's the specific auto-start message
-          if (m.role === 'user' && m.content === "Please analyze the event results for this session.") {
+          // @ts-ignore: Accessing content or parts safely
+          const content = getMessageText(m);
+          if (m.role === 'user' && content === "Please analyze the event results for this session.") {
             return null;
           }
 
@@ -110,7 +120,7 @@ export function EventikChat({ sessionData }: EventikChatProps) {
                   : "bg-muted"
                   }`}
               >
-                <div className="whitespace-pre-wrap">{getMessageText(m)}</div>
+                <div className="whitespace-pre-wrap">{content}</div>
               </div>
             </div>
           );
@@ -118,22 +128,13 @@ export function EventikChat({ sessionData }: EventikChatProps) {
       </div>
 
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          // console.log("Submitting chat message.");
-          if (sessionData) {
-            handleSubmit(e, { body: { sessionData } });
-          } else {
-            // Fallback if no session data yet
-            handleSubmit(e);
-          }
-        }}
+        onSubmit={handleFormSubmit}
         className="flex items-center gap-2 border-t border-border p-4"
       >
         <input
           className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          value={input}
-          onChange={handleInputChange}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask Eventik about your audience..."
         />
         <button
