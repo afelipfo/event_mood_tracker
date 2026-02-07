@@ -12,6 +12,7 @@ const EMOTION_LABELS: Record<Emotion, string> = {
   surprised: "Surprised",
   sad: "Sad",
   angry: "Angry",
+  bored: "Bored",
 };
 
 // Simple color mapping for progress bars (Tailwind bg classes)
@@ -21,6 +22,7 @@ const EMOTION_COLORS: Record<Emotion, string> = {
   surprised: "bg-amber-500",
   sad: "bg-blue-500",
   angry: "bg-red-500",
+  bored: "bg-purple-500",
 };
 
 export default function Page() {

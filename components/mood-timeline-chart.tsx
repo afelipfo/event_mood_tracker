@@ -17,6 +17,7 @@ const chartConfig = {
   surprised: { label: "Surprised", color: "hsl(38, 92%, 50%)" },
   sad: { label: "Sad", color: "hsl(217, 91%, 60%)" },
   angry: { label: "Angry", color: "hsl(0, 84%, 60%)" },
+  bored: { label: "Bored", color: "hsl(270, 50%, 60%)" },
 } satisfies ChartConfig;
 
 const EMOTION_KEYS = Object.keys(chartConfig) as Array<

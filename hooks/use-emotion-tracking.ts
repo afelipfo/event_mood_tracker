@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 // Fixed set of emotions to track
-const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry"] as const;
+const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry", "bored"] as const;
 export type Emotion = (typeof EMOTIONS)[number];
 export type EmotionCounts = Record<Emotion, number>;
 export type FaceBox = {
@@ -13,6 +13,18 @@ export type FaceBox = {
   height: number;
 };
 export type Status = "idle" | "loading" | "tracking" | "summary";
+
+// Mapping from our emotion names to the face-api.js expression keys.
+// face-api.js doesn't have a "bored" expression, so we approximate it
+// using "disgusted" (similar low-energy, negative-valence characteristics).
+const FACEAPI_EXPRESSION_MAP: Record<Emotion, string> = {
+  happy: "happy",
+  neutral: "neutral",
+  surprised: "surprised",
+  sad: "sad",
+  angry: "angry",
+  bored: "disgusted",
+};
 
 // CDN URL for pre-trained face-api.js models
 const MODEL_URL =
@@ -25,6 +37,7 @@ const initialCounts: EmotionCounts = {
   surprised: 0,
   sad: 0,
   angry: 0,
+  bored: 0,
 };
 
 export function useEmotionTracking() {
@@ -96,7 +109,9 @@ export function useEmotionTracking() {
         let maxScore = -1;
 
         for (const emotion of EMOTIONS) {
-          const score = expressions[emotion] ?? 0;
+          const faceApiKey = FACEAPI_EXPRESSION_MAP[emotion];
+          const score =
+            (expressions as unknown as Record<string, number>)[faceApiKey] ?? 0;
           if (score > maxScore) {
             maxScore = score;
             dominant = emotion;

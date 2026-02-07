@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { EmotionCounts } from "./use-emotion-tracking";
 
-const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry"] as const;
+const EMOTIONS = ["happy", "neutral", "surprised", "sad", "angry", "bored"] as const;
 const SNAPSHOT_INTERVAL_MS = 30_000; // 30 seconds
 const STORAGE_KEY = "mood-timeline";
 
@@ -15,6 +15,7 @@ export interface MoodSnapshot {
   surprised: number;
   sad: number;
   angry: number;
+  bored: number;
 }
 
 /**
@@ -36,6 +37,7 @@ export function useMoodTimeline(
     surprised: 0,
     sad: 0,
     angry: 0,
+    bored: 0,
   });
   const currentCountsRef = useRef<EmotionCounts>(emotionCounts);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -76,6 +78,7 @@ export function useMoodTimeline(
       surprised: Math.round((deltas.surprised / totalDelta) * 100),
       sad: Math.round((deltas.sad / totalDelta) * 100),
       angry: Math.round((deltas.angry / totalDelta) * 100),
+      bored: Math.round((deltas.bored / totalDelta) * 100),
     };
 
     prevCountsRef.current = { ...current };
