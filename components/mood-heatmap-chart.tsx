@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import type { MoodSnapshot } from "@/hooks/use-mood-timeline";
 
 const EMOTIONS = [
@@ -81,12 +81,9 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
 
         {/* Rows: one per emotion */}
         {EMOTIONS.map((emotion) => (
-          <>
+          <Fragment key={emotion}>
             {/* Row label */}
-            <div
-              key={`label-${emotion}`}
-              className="flex items-center text-xs text-muted-foreground pr-2 justify-end"
-            >
+            <div className="flex items-center text-xs text-muted-foreground pr-2 justify-end">
               {EMOTION_LABELS[emotion]}
             </div>
 
@@ -112,7 +109,7 @@ export function MoodHeatmapChart({ data }: MoodHeatmapChartProps) {
                 </div>
               );
             })}
-          </>
+          </Fragment>
         ))}
       </div>
 
