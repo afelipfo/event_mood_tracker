@@ -7,7 +7,6 @@ import { useMoodTimeline } from "@/hooks/use-mood-timeline";
 import { MoodCharts } from "@/components/mood-charts";
 import { FloatingEmojis } from "@/components/floating-emojis";
 import { EngagementScoreGauge } from "@/components/engagement-score-gauge";
-import { EventikChat } from "@/components/eventik-chat";
 
 /* ── Emotion display config ── */
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -80,13 +79,6 @@ export default function Page() {
   };
 
   const [saving, setSaving] = useState(false);
-  // Renamed from sessionId to sessionData to hold the full context
-  const [sessionData, setSessionData] = useState<{
-    totalDetections: number;
-    dominantMood: string | null;
-    emotionPercentages: Record<string, number>;
-    timelineData: any[];
-  } | null>(null);
 
   const handleEndEvent = async () => {
     stopTracking();
@@ -108,9 +100,6 @@ export default function Page() {
       // Save to Local Storage
       const existingSessions = JSON.parse(localStorage.getItem("eventik_sessions") || "[]");
       localStorage.setItem("eventik_sessions", JSON.stringify([newSessionData, ...existingSessions]));
-
-      // Set session data for the chat
-      setSessionData(newSessionData);
 
     } catch (err) {
       console.error("Failed to save session locally:", err);
@@ -161,11 +150,6 @@ export default function Page() {
                     <li>
                       All data is <strong className="text-foreground">ephemeral</strong> and destroyed when you
                       close the tab or end the session.
-                    </li>
-                    <li>
-                      If you choose to use the AI analysis feature, anonymized
-                      and noise-added emotion percentages may be sent to a
-                      third-party AI service (OpenAI).
                     </li>
                   </ul>
                 </div>
@@ -554,14 +538,6 @@ export default function Page() {
                       <MoodCharts data={timeline} />
                     </div>
                   )}
-
-                  {/* Eventik Chatbot */}
-                  <div className="space-y-2 mt-4">
-                    <h3 className="text-sm font-medium text-foreground">
-                      Eventik Analysis
-                    </h3>
-                    <EventikChat sessionData={sessionData} />
-                  </div>
                 </>
               )}
 
