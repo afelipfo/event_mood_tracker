@@ -26,7 +26,8 @@ interface EventikChatProps {
 
 export function EventikChat({ sessionData }: EventikChatProps) {
   const [input, setInput] = useState("");
-  const { messages, sendMessage, status, error } = useChat({
+
+  const { messages, append, status, error } = useChat({
     onError: (err) => {
       console.error("Chat error:", err);
     },
@@ -36,21 +37,22 @@ export function EventikChat({ sessionData }: EventikChatProps) {
 
   // Auto-start the conversation when sessionData is available
   useEffect(() => {
-    if (!hasStartedRef.current && sessionData) {
+    if (!hasStartedRef.current && sessionData && append) {
       hasStartedRef.current = true;
       console.log("Starting chat with session data");
-      sendMessage(
-        { text: "Please analyze the event results for this session." },
+      append(
+        { role: "user", content: "Please analyze the event results for this session." },
         { body: { sessionData } },
       );
     }
-  }, [sessionData, sendMessage]);
+  }, [sessionData, append]);
 
   const isLoading = status === "streaming" || status === "submitted";
 
   return (
     <div className="flex h-[500px] w-full flex-col rounded-md border border-border bg-card shadow-sm">
       <div className="flex items-center gap-2 border-b border-border p-4 bg-muted/30">
+
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
           <Bot className="h-5 w-5 text-primary" />
         </div>
@@ -60,7 +62,7 @@ export function EventikChat({ sessionData }: EventikChatProps) {
             Strategic Mood Analyst
           </p>
         </div>
-      </div>
+      </div >
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !error && (
@@ -84,7 +86,7 @@ export function EventikChat({ sessionData }: EventikChatProps) {
           if (
             m.role === "user" &&
             getMessageText(m) ===
-              "Please analyze the event results for this session."
+            "Please analyze the event results for this session."
           ) {
             return null;
           }
@@ -92,16 +94,14 @@ export function EventikChat({ sessionData }: EventikChatProps) {
           return (
             <div
               key={m.id}
-              className={`flex items-start gap-3 ${
-                m.role === "user" ? "flex-row-reverse" : "flex-row"
-              }`}
+              className={`flex items-start gap-3 ${m.role === "user" ? "flex-row-reverse" : "flex-row"
+                }`}
             >
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${m.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
+                  }`}
               >
                 {m.role === "user" ? (
                   <User className="h-5 w-5" />
@@ -110,11 +110,10 @@ export function EventikChat({ sessionData }: EventikChatProps) {
                 )}
               </div>
               <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
+                className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${m.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
+                  }`}
               >
                 <div className="whitespace-pre-wrap">{getMessageText(m)}</div>
               </div>
@@ -130,9 +129,9 @@ export function EventikChat({ sessionData }: EventikChatProps) {
           const text = input;
           setInput("");
           if (sessionData) {
-            sendMessage({ text }, { body: { sessionData } });
+            append({ role: "user", content: text }, { body: { sessionData } });
           } else {
-            sendMessage({ text });
+            append({ role: "user", content: text });
           }
         }}
         className="flex items-center gap-2 border-t border-border p-4"
@@ -152,6 +151,6 @@ export function EventikChat({ sessionData }: EventikChatProps) {
           <span className="sr-only">Send</span>
         </button>
       </form>
-    </div>
+    </div >
   );
 }
