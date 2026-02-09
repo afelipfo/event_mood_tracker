@@ -77,7 +77,12 @@
     font-family: var(--font-body), system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display), Georgia, serif;
   }
 }
@@ -119,7 +124,8 @@ body::before {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.5;
   }
   50% {
@@ -128,7 +134,9 @@ body::before {
 }
 
 @keyframes pulse-dot {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
@@ -197,4 +205,22 @@ body::before {
   animation: emoji-float ease-out forwards;
   will-change: transform, opacity;
   user-select: none;
+}
+
+/* ── Landing page animations ── */
+@keyframes scan {
+  0% {
+    top: -5%;
+  }
+  100% {
+    top: 105%;
+  }
+}
+
+.scan-line {
+  animation: scan 2.5s ease-in-out infinite;
+}
+
+.mock-bar-animate {
+  animation: pulse-glow 3s ease-in-out infinite;
 }
